@@ -1,0 +1,36 @@
+---
+title: "Grupo"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+</br>
+</br>
+
+# Turma
+
+## --> 1IA - Artificial Intelligence & Machine Learning
+
+</br>
+</br>
+</br>
+
+# Integrantes
+
+</br>
+### --> Allan Gregory Gilabel            RM: 330158
+</br>
+### --> Douglas Gomes Modesto            RM: 330217
+</br>
+### --> Jonas Pereira Prado de Lima      RM: 330323
+</br>
+### --> Liliane Vieira Scandoleiro       RM: 330672
+
+</br>
+
+
+
+
+

@@ -1,0 +1,543 @@
+---
+title: " Análise Exploratória dos Dados de Táxi de NYC"
+output: html_document
+--- 
+# 1. Introdução
+  Nos últimos anos o setor vinicola e os setores de tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de analises exploratório dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinicola com técnicas específicas de data mining e verificar até que ponto está interligação pode melhorar a tomada de decisão.
+  
+## 1.1. Instalando e carregando 
+
+Remove mensagens de alerta
+```{r}
+options( warn = -1 )
+```
+
+Instala as bibliotecas utilizadas para execução do código.
+```{r}
+#install.packages('dplyr')
+#install.packages('readr')
+#install.packages('plotly')
+#install.packages('scales')
+#install.packages("psych")
+#install.packages("plotly")
+#install.packages("gmodels")
+#install.packages("corrgram")
+
+#install.packages('rgdal')
+#install.packages('RColorBrewer')
+#install.packages('sp')
+#install.packages('leaflet')
+#install.packages('bindrcpp')
+#install.packages('magrittr')
+#install.packages('dplyr')
+#install.packages('ggplot2')
+#install.packages('lubridate')
+#install.packages('grid') 
+#install.packages('quantile')
+#install.packages('hexbin')
+#install.packages('gmodels')
+
+#install.packages('psych')
+
+```
+
+Carrega as bibliotecas utilizadas para execução do código.
+
+```{r}
+
+library('dplyr')
+library('readr')
+library('plotly')
+library('scales')
+library('hexbin')
+library('rgdal')
+library('RColorBrewer')
+library('sp')
+library('leaflet')
+library('bindrcpp')
+library('magrittr')
+library('dplyr')
+library('ggplot2')
+library('lubridate')
+library('grid') 
+library('gmodels')
+library('psych')
+library('corrgram')
+```
+
+
+##1.2 Carregando base de dados
+Base de dados *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição.
+```{r }
+base = read.csv2("data/base.csv")
+
+```
+
+Mostra até duas casas decimais
+```{r}
+
+options("scipen" = 2)
+
+```
+
+Dividindo o dataset em 30% Teste e 70% Treino
+
+```{r}
+
+## 75% of the sample size
+smp_size <- floor(0.7 * nrow(base))
+
+## set the seed to make your partition reproducible
+set.seed(1)
+train_ind <- sample(seq_len(nrow(base)), size = smp_size)
+
+train <- base[train_ind, ]
+test <- base[-train_ind, ]
+
+```
+
+#1.3 Estrutura de Dados
+Visualizando a estrutura geral do conjuntos de dados, usando o comando summary.Primeiro para os dados de treino:
+```{r}
+summary(train)
+```
+
+E então para os dados de teste:
+```{r}
+summary(test)
+```
+
+Analisamos que:
+ - *vendor_id* só aceita os valores 1 ou 2, diferenciando duas empresas de táxi
+ - *passenger_count* possui em média de 1 e no máximo 9 passageiros em ambos datasets.
+ - *trip_duration*: utilizada como target na nossa base de treino, contabilizados em segundos.
+
+## 1.4 Missing Values
+
+Alguns dos problemas encontrados na modelagem dos dados são a ausência de valores para determinadas variáveis, ou seja, registros incompletos.Existem alguns tratamentos realizados para se aplicar nesses cenários,aqui obtivemos *"sorte"* de que os nossos dados estão completos e não há valores nulos.
+```{r}
+sum(is.na(train))
+```
+```{r}
+sum(is.na(test))
+```
+
+
+#1.5 Limitando a base de dados
+
+  Para melhor performace sem perder a qualidade dos dados, verificamos a quantidade de variáveis e registros de nosso dataset, limitando-os posteriormente.
+
+```{r}
+dim(train)
+
+```
+
+```{r}
+dim(test)
+```
+
+Verificando a quantidade de linhas e colunas nos dataset atual.
+```{r}
+dim(train)
+dim(test)
+
+```
+
+```{r}
+#mostrar as vari?veis
+
+str(train)
+
+```
+
+```{r}
+#mostra o nome das colunas
+names(train)
+
+```
+
+
+```{r}
+attach(train)
+
+
+```
+
+Abaixo iremos avaliar a frequência absoluta no dataset de treino entre vinhos tinto e vinho branco
+
+```{r}
+
+table(as.factor(train$quality), train$Vinho, useNA = "ifany")
+
+table(as.factor(train$quality), train$Vinho)
+
+```
+
+```{r}
+
+# 2-Way Cross Tabulation
+
+CrossTable(as.factor(train$quality), train$Vinho) 
+ 
+
+
+
+```
+
+```{r}
+
+aggregate( train[,-13],
+          by = list(train$Vinho),
+          FUN = mean)
+
+
+```
+
+```{r}
+aggregate(train[,-13],
+         by = list(train$Vinho),
+          FUN = median)
+
+```
+
+```{r}
+
+mean(train$fixedacidity) # media
+
+
+```
+
+```{r}
+median(train$fixedacidity) # mediana
+
+
+```
+
+```{r}
+
+quantile(train$fixedacidity,type=4)  # Quartis
+
+```
+
+```{r}
+
+quantile(train$fixedacidity,.65,type=4) # exato percentil
+
+```
+
+```{r}
+
+range(train$fixedacidity)  # amplitude
+
+```
+
+```{r}
+
+diff(range(train$fixedacidity)) #diferen?a entre o maior e o menor valor
+
+```
+
+```{r}
+
+min(train$fixedacidity)  # valor m?nimo de x
+
+```
+
+```{r}
+
+max(train$fixedacidity)  # valor maximo de x
+
+```
+
+```{r}
+
+var(train$fixedacidity) # para obter a variancia
+
+```
+
+```{r}
+
+sd(train$fixedacidity)  # para obter o desvio padrao
+
+```
+
+
+```{r}
+CV_fixedacidity<-sd(train$fixedacidity)/mean(train$fixedacidity)*100  
+# para obter o coefiiente de variacao
+CV_fixedacidity
+
+
+
+```
+
+```{r}
+
+#comando para gerar em 3 linhas e 4 colunas os histogramas
+par (mfrow=c(3,4))
+hist(fixedacidity)
+hist(volatileacidity)
+hist(citricacid )
+hist(residualsugar)
+hist(chlorides)
+hist(freesulfurdioxide)
+hist(totalsulfurdioxide)
+hist(density)
+hist(pH)
+hist(sulphates)
+hist(alcohol)
+hist(quality)
+#dev.off()
+
+hist(quality, col=c("pink"), col.main="darkgray", prob=T)
+     
+attach(train)
+
+
+```
+
+```{r}
+
+#comando para gerar em 3 linhas e 4 colunas os histogramas
+par (mfrow=c(3,4))
+boxplot(fixedacidity, main='fixedacidity')
+boxplot(volatileacidity , main='volatileacidity')
+boxplot(citricacid , main='citricacid')
+boxplot(residualsugar, main='residualsugar')
+boxplot(chlorides, main='chlorides')
+boxplot(freesulfurdioxide, main='freesulfurdioxide')
+boxplot(totalsulfurdioxide, main='totalsulfurdioxide')
+boxplot(density, main='density')
+boxplot(pH, main='pH')
+boxplot(sulphates, main='sulphates')
+boxplot(alcohol, main='alcohol')
+boxplot(base$quality, main='quality')
+#dev.off()
+
+boxplot(quality ~ Vinho, main='quality')
+
+```
+
+```{r}
+par (mfrow=c(3,4))
+
+boxplot(fixedacidity ~ Vinho, main='fixedacidity',col=c('red','blue'))
+boxplot(volatileacidity ~ Vinho , main='volatileacidity')
+boxplot(citricacid ~ Vinho, main='citricacid')
+boxplot(residualsugar ~ Vinho, main='residualsugar',col=c('red','blue'))
+boxplot(chlorides ~ Vinho, main='chlorides')
+boxplot(freesulfurdioxide ~ Vinho, main='freesulfurdioxide')
+boxplot(totalsulfurdioxide ~ Vinho, main='totalsulfurdioxide')
+boxplot(density ~ Vinho, main='density')
+boxplot(pH ~ Vinho, main='pH')
+boxplot(sulphates ~ Vinho, main='sulphates')
+boxplot(alcohol ~ Vinho, main='alcohol')
+
+
+```
+
+```{r}
+
+# Grafico de dispersao ( pch=caracter, lwd=largura)
+
+plot(freesulfurdioxide~totalsulfurdioxide)
+plot(freesulfurdioxide~totalsulfurdioxide, pch=1, lwd=3)
+
+plot(freesulfurdioxide~totalsulfurdioxide)
+abline(v=mean(freesulfurdioxide), col="red")
+abline(h=mean(totalsulfurdioxide), col="green")
+
+```
+
+```{r}
+
+attach(train)
+train$fx_redSugar <- cut(residualsugar,breaks=c(0,10,20,30,max(residualsugar)))  
+train$fx_redSugar  
+str(train)
+CrossTable(train$fx_redSugar , train$Vinho) 
+
+```
+
+```{r}
+
+
+attach(train)
+
+
+describe(train)
+
+# describe
+# A data.frame of the relevant statistics:
+# item name
+# item number
+# number of valid cases
+# mean
+# standard deviation
+# trimmed mean (with trim defaulting to .1)
+# median (standard or interpolated
+# mad: median absolute deviation (from the median)
+# minimum
+# maximum
+# skew
+# kurtosis
+# standard error
+
+```
+
+
+
+```{r}
+summary(base)
+white <- subset(base, Vinho=="WHITE", select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
+                                                 chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
+                                                 sulphates,alcohol))
+
+```
+
+
+
+```{r}
+
+#Estat?sticas descritivas
+summary(white)
+ 
+str(white)
+
+attach(white)
+ 
+
+```
+
+```{r}
+
+
+#Estatasticas descritivas
+
+par (mfrow=c(3,4))
+boxplot(fixedacidity, main='fixedacidity')
+boxplot(volatileacidity , main='volatileacidity')
+boxplot(citricacid , main='citricacid')
+boxplot(residualsugar, main='residualsugar')
+boxplot(chlorides, main='chlorides')
+boxplot(freesulfurdioxide, main='freesulfurdioxide')
+boxplot(totalsulfurdioxide, main='totalsulfurdioxide')
+boxplot(density, main='density')
+boxplot(pH, main='pH')
+boxplot(sulphates, main='sulphates')
+boxplot(alcohol, main='alcohol')
+boxplot(quality, main='quality')
+#dev.off()
+
+boxplot.stats(white$residualsugar)
+
+
+
+```
+
+```{r}
+
+AIQ_residualsugar<-quantile(white$residualsugar,.75,type=2)-quantile(white$residualsugar,.25,type=2)
+AIQ_residualsugar
+
+limsup_residualsugar= quantile(white$residualsugar,.75,type=4)+1.5*AIQ_residualsugar
+limsup_residualsugar
+liminf_residualsugar= quantile(white$residualsugar,.25,type=2)-1.5*AIQ_residualsugar
+liminf_residualsugar
+
+
+```
+
+```{r}
+
+#excluir outliers
+
+plot(quality~residualsugar)
+
+white1<-subset(white, residualsugar<=40)   
+
+#fix(white1)
+
+attach(white1)
+
+
+```
+
+```{r}
+
+summary <- summary(white1)
+show(summary)
+
+
+```
+
+```{r}
+plot(residualsugar,alcohol)
+abline(v=mean(residualsugar), col="red")
+abline(h=mean(alcohol), col="green")
+
+
+```
+
+```{r}
+
+# matriz de correla??es
+matcor <- cor(white1)
+print(matcor, digits = 2)
+
+```
+
+```{r}
+corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
+
+
+```
+
+
+```{r}
+
+panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
+                      ...)  {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- cor(x, y , use = "pairwise.complete.obs")
+  txt <- format(c(r, 0.123456789), digits = digits) [1]
+  txt <- paste(prefix, txt, sep = "")
+  if (missing(cex.cor))
+    cex <- 0.8/strwidth(txt)
+  # abs(r) ? para que na sa?da as correla??es ficam proporcionais
+  text(0.5, 0.5, txt, cex = cex * abs(r))
+}
+
+```
+
+
+```{r}
+
+#pdf(file = "grafico.pdf")
+pairs(white1, lower.panel=panel.smooth, upper.panel=panel.cor)
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```
+
+
+```{r}
+
+
+
+```

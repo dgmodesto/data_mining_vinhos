@@ -1,0 +1,24 @@
+---
+title: "Trabalho Final - Programando IA com R"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+</br>
+</br>
+</br>
+</br>
+
+## FACULDADE DE INFORMÁTICA E ADMINISTRAÇÃO PAULISTA
+
+</br>
+</br>
+
+### MBA em Artificial Intelligence & Machine Learning
+
+</br>
+</br>
+
+### R COMO FERRAMENTA DE MODELAGEM PARA IA - TRABALHO FINAL
