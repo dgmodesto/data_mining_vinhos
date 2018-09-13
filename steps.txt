@@ -1,0 +1,52 @@
+item 1
+ - Conhecer as colunas do Dataset
+
+item 2
+ - Identificar os tipos de dados das propriedades do Dataset
+
+item 3
+ - Verificar se há valores nulos e se há a possibilidade de tratar os dados 
+
+item 4
+ - Normalizar e padronizar os dados. Exemplo; Utilizar MinMax para normalização dos dados numéricos
+
+item 5
+ - Verificar as variáveis categoricas e transformá-las em numéricas
+
+item 6
+ - Analisar a correlação entre as variáveis com o nosso target para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas 
+
+item 7
+
+ - Possobilidade de utilizar algum método de seleção de variáveis. Por exemplo: stepwise
+
+* Antes de aplicar os algoritmos, separar a base de treino e teste
+Item 8
+ - Aplicar algoritmo de regressão
+ - Incluir analise sobre o resultado do algoritmo
+
+item 9
+ - Aplicar algoritmo de Árvore de Decisão
+ - Incluir analise sobre o resultado do algoritmo
+
+item 10
+ - Aplicar algoritmo de Regressão Logística
+ - Incluir analise sobre o resultado do algoritmo
+
+Item 11
+
+ - Análise de resíduos
+
+item 12
+ - Métodos de avaliação. Exemplo: score, acurácia
+ - Verificação das taxas de erro. por exemplo: MAPE, MAE, RMSE
+
+
+Item 13
+ - Fazer a simulação de previsão para um vinho
+
+Item 14
+ - Considerações finais
+
+item 15
+ - agradecer e sair pra beber

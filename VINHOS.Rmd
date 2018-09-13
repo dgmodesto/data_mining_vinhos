@@ -19,24 +19,19 @@ Instala as bibliotecas utilizadas para execução do código.
 #install.packages('plotly')
 #install.packages('scales')
 #install.packages("psych")
-#install.packages("plotly")
-#install.packages("gmodels")
 #install.packages("corrgram")
-
 #install.packages('rgdal')
 #install.packages('RColorBrewer')
 #install.packages('sp')
 #install.packages('leaflet')
 #install.packages('bindrcpp')
 #install.packages('magrittr')
-#install.packages('dplyr')
 #install.packages('ggplot2')
 #install.packages('lubridate')
 #install.packages('grid') 
 #install.packages('quantile')
 #install.packages('hexbin')
 #install.packages('gmodels')
-
 #install.packages('psych')
 
 ```
@@ -127,14 +122,6 @@ sum(is.na(test))
 
   Para melhor performace sem perder a qualidade dos dados, verificamos a quantidade de variáveis e registros de nosso dataset, limitando-os posteriormente.
 
-```{r}
-dim(train)
-
-```
-
-```{r}
-dim(test)
-```
 
 Verificando a quantidade de linhas e colunas nos dataset atual.
 ```{r}
@@ -194,7 +181,7 @@ aggregate( train[,-13],
 ```
 
 ```{r}
-aggregate(train[,-13],
+aggregate(train[,1:13],
          by = list(train$Vinho),
           FUN = median)
 
@@ -353,7 +340,7 @@ abline(h=mean(totalsulfurdioxide), col="green")
 
 attach(train)
 train$fx_redSugar <- cut(residualsugar,breaks=c(0,10,20,30,max(residualsugar)))  
-train$fx_redSugar  
+#train$fx_redSugar  
 str(train)
 CrossTable(train$fx_redSugar , train$Vinho) 
 
@@ -524,6 +511,20 @@ pairs(white1, lower.panel=panel.smooth, upper.panel=panel.cor)
 
 ```{r}
 
+install.packages("corrplot")
+library(corrplot)
+
+corrplot::corrplot(matcor, method="circle", order="hclust")
+
+```
+
+
+```{r}
+#Gr?fico de dispersao para a associa??o entre ?rea m2 e valor
+plot (x = train$residualsugar, y = train$density,
+      main = "Grafico de dispersao",
+      xlab = "residualsugar",
+      ylab = "density")
 
 
 ```
@@ -531,11 +532,107 @@ pairs(white1, lower.panel=panel.smooth, upper.panel=panel.cor)
 
 ```{r}
 
+ggplot (data= train, aes(x=train$residualsugar, y=train$density)) + 
+  geom_point(size=0.4) +
+  geom_smooth(method="lm", color ="red", linetype=2) +
+  labs(title = "Grafico de dispersao, residualsugar e density", x="residualsugar", y="density")
+
+```
+
+```{r}
+attach(train)
+#names(train)
+modelo1 <- lm(quality ~ citricacid+freesulfurdioxide+pH+fixedacidity+residualsugar+totalsulfurdioxide+sulphates+volatileacidity+chlorides+density+alcohol+fx_redSugar)
+summary(modelo1)
+
+```
+
+```{r}
+forward<-step(modelo1,direction="forward")
+forward
+summary(forward)
+
+```
+
+```{r}
+
+backward<-step(modelo1,direction="backward")
+backward
+summary(backward)
+
+```
+
+```{r}
+
+stepwise<-step(modelo1,direction="both")
+ 
+stepwise
+summary(stepwise)
 
 
 ```
 
+```{r}
+# Modelo final.
+modelo_fim <- lm(quality ~ citricacid+freesulfurdioxide+pH+fixedacidity+residualsugar+totalsulfurdioxide+sulphates+volatileacidity+chlorides+density+alcohol+fx_redSugar)
+summary(modelo_fim)
 
+
+
+
+```
+
+```{r}
+
+
+Val_pred <- predict(modelo_fim,interval = "prediction", level = 0.95) 
+fix(Val_pred)
+
+```
+
+```{r}
+# intervalo de confianca - grafico para media
+fit <- Val_pred[,1] # valores preditos
+lower <- Val_pred[,2] # limite inferior
+upper <- Val_pred[,3] # limite superior
+
+
+```
+
+```{r}
+mse <- mean((train$quality - fit)^2)
+sqrt(mse)
+
+
+```
+
+```{r}
+
+erro_usando_media <- mean((train$quality - mean(train$quality))^2)
+sqrt(erro_usando_media)
+
+```
+```{r}
+
+# grafico residuo
+rs <- resid(modelo_fim)
+plot(predict(modelo_fim), rs, xlab = "Preditor linear",ylab = "Residuos")
+abline(h = 0, lty = 2)
+
+```
+```{r}
+attach(train)
+train_Final<-cbind(train,Val_pred)
+
+fix(train_Final)
+
+
+write.table(file='data/Arquivo_Valorizacao_Ambiental_saida.csv',train_Final,sep=';',dec=',')
+
+
+
+
+```
 ```{r}
 
 
