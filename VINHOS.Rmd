@@ -3,9 +3,11 @@ title: " Análise Exploratória dos Dados de Táxi de NYC"
 output: html_document
 --- 
 # 1. Introdução
-  Nos últimos anos o setor vinicola e os setores de tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de analises exploratório dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinicola com técnicas específicas de data mining e verificar até que ponto está interligação pode melhorar a tomada de decisão.
-  
-## 1.1. Instalando e carregando 
+
+Nos últimos anos o setor vinícola e os setores de tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de análises exploratórias dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinícola com técnicas específicas de data mining e verificar até que ponto esta interligação pode melhorar a tomada de decisão.
+
+
+## 1.1. Instalando e carregando as bibliotecas
 
 Remove mensagens de alerta
 ```{r}
@@ -33,13 +35,12 @@ Instala as bibliotecas utilizadas para execução do código.
 #install.packages('hexbin')
 #install.packages('gmodels')
 #install.packages('psych')
-
+#install.packages('standardize')
 ```
 
 Carrega as bibliotecas utilizadas para execução do código.
 
 ```{r}
-
 library('dplyr')
 library('readr')
 library('plotly')
@@ -58,41 +59,39 @@ library('grid')
 library('gmodels')
 library('psych')
 library('corrgram')
+library('standardize')
 ```
 
 
-##1.2 Carregando base de dados
+## 1.2. Carregando a base de dados
+
 Base de dados *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição.
 ```{r }
 base = read.csv2("data/base.csv")
-
 ```
 
 Mostra até duas casas decimais
 ```{r}
-
 options("scipen" = 2)
-
 ```
 
 Dividindo o dataset em 30% Teste e 70% Treino
-
 ```{r}
-
-## 75% of the sample size
+## 70% do tamanho da base
 smp_size <- floor(0.7 * nrow(base))
 
-## set the seed to make your partition reproducible
+## coloca o seed para fazer sua partição reproduzível
 set.seed(1)
 train_ind <- sample(seq_len(nrow(base)), size = smp_size)
 
 train <- base[train_ind, ]
 test <- base[-train_ind, ]
-
 ```
 
-#1.3 Estrutura de Dados
-Visualizando a estrutura geral do conjuntos de dados, usando o comando summary.Primeiro para os dados de treino:
+
+## 1.3. Estrutura de Dados
+
+Visualizando a estrutura geral do conjuntos de dados, usando o comando summary. Primeiro para os dados de treino:
 ```{r}
 summary(train)
 ```
@@ -102,14 +101,148 @@ E então para os dados de teste:
 summary(test)
 ```
 
-Analisamos que:
- - *vendor_id* só aceita os valores 1 ou 2, diferenciando duas empresas de táxi
- - *passenger_count* possui em média de 1 e no máximo 9 passageiros em ambos datasets.
- - *trip_duration*: utilizada como target na nossa base de treino, contabilizados em segundos.
+Mostra as colunas que temos no Dataset e suas respectivas medidas, como, por exemplo, máximo, mínimo, média, mediana etc. Base de treino:
+```{r}
+describe(train)
+```
+
+Base de teste:
+```{r}
+describe(test)
+```
+
+Identifica os tipos de dados das propriedades do dataset na base de treino:
+```{r}
+class(train$id_vinho)
+class(train$fixedacidity)
+class(train$volatileacidity)
+class(train$citricacid)
+class(train$residualsugar)
+class(train$chlorides)
+class(train$freesulfurdioxide)
+class(train$totalsulfurdioxide)
+class(train$density)
+class(train$pH)
+class(train$sulphates)
+class(train$alcohol)
+class(train$quality)
+class(train$Vinho)
+```
+
+Base de teste:
+```{r}
+class(test$id_vinho)
+class(test$fixedacidity)
+class(test$volatileacidity)
+class(test$citricacid)
+class(test$residualsugar)
+class(test$chlorides)
+class(test$freesulfurdioxide)
+class(test$totalsulfurdioxide)
+class(test$density)
+class(test$pH)
+class(test$sulphates)
+class(test$alcohol)
+class(test$quality)
+class(test$Vinho)
+```
+
+Agora verificamos se há valores nulos em ambas as bases (treino e teste) para um possível tratamento:
+```{r}
+sum(is.na(train))
+```
+```{r}
+sum(is.na(test))
+```
+
+Possuímos uma variável categórica, da qual transformaremos em numérica para melhor trabalharmos em cima de nossos algoritmos. A variável é VINHO, que possui os valores "RED" e "WHITE":
+```{r}
+train$Vinho <- as.numeric(train$Vinho)
+train$Vinho
+```
+
+Aqui ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos:
+```{r}
+train_normalizado = (train-min(train))/(max(train)-min(train))
+
+summary(train_normalizado)
+```
+
+#### PAREI AQUI - ALLAN
+
+
+###JONAS - COMECEI AQUI
+item 5
+ - Verificar as vari�veis categoricas e transform�-las em num�ricas
+```{r}
+
+#transformando o campo Vinho na train e test
+train$Vinho = as.numeric(train$Vinho)
+test$Vinho = as.numeric(test$Vinho)
+
+View(train)
+View(test)
+```
+
+item 6
+ - Analisar a correla��o entre as vari�veis com o nosso target para identificar as vari�veis com maior import�ncia, caso necess�rio, fazer itera��es entre elas
+```{r}
+
+#correla��o de todas as variaveis, ordenadas de 1 a -1
+cor(train$Vinho,train$totalsulfurdioxide)
+cor(train$Vinho,train$freesulfurdioxide)
+cor(train$Vinho,train$residualsugar)
+cor(train$Vinho,train$citricacid)
+cor(train$Vinho,train$quality)
+cor(train$Vinho,train$alcohol)
+cor(train$Vinho,train$id_vinho)
+cor(train$Vinho,train$pH)
+cor(train$Vinho,train$density)
+cor(train$Vinho,train$sulphates)
+cor(train$Vinho,train$fixedacidity)
+cor(train$Vinho,train$chlorides)
+cor(train$Vinho,train$volatileacidity)
+
+```
+
+item 7
+ - Possobilidade de utilizar algum m�todo de sele��o de vari�veis. Por exemplo: stepwise
+ Item 8
+ - Aplicar algoritmo de regress�o
+```{r}
+attach(train)
+
+#modelo com todas as variaveis
+modelo1 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
+summary(modelo1)
+
+##n�o excluiu nenhuma variavel
+forward<-step(modelo1,direction="forward")
+forward
+summary(forward)
+
+##excluiu a varialvel id_vinho
+backward<-step(modelo1,direction="backward")
+backward
+summary(backward)
+
+##excluiu a varialvel id_vinho
+stepwise<-step(modelo1,direction="both")
+stepwise
+summary(stepwise)
+
+#modelo sem a variavel id_vinho
+modelo2 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
+summary(modelo2)
+
+
+```
+##JONAS - TERMINEI AQUI
+
 
 ## 1.4 Missing Values
 
-Alguns dos problemas encontrados na modelagem dos dados são a ausência de valores para determinadas variáveis, ou seja, registros incompletos.Existem alguns tratamentos realizados para se aplicar nesses cenários,aqui obtivemos *"sorte"* de que os nossos dados estão completos e não há valores nulos.
+  Alguns dos problemas encontrados na modelagem dos dados são a ausência de valores para determinadas variáveis, ou seja, registros incompletos.Existem alguns tratamentos realizados para se aplicar nesses cenários. Aqui obtivemos *"sorte"* de que os nossos dados estão completos e não há valores nulos.
 ```{r}
 sum(is.na(train))
 ```
@@ -118,7 +251,7 @@ sum(is.na(test))
 ```
 
 
-#1.5 Limitando a base de dados
+## 1.5 Limitando a base de dados
 
   Para melhor performace sem perder a qualidade dos dados, verificamos a quantidade de variáveis e registros de nosso dataset, limitando-os posteriormente.
 
@@ -134,118 +267,82 @@ dim(test)
 #mostrar as vari?veis
 
 str(train)
-
 ```
 
 ```{r}
 #mostra o nome das colunas
 names(train)
-
 ```
 
 
 ```{r}
 attach(train)
-
-
 ```
 
-Abaixo iremos avaliar a frequência absoluta no dataset de treino entre vinhos tinto e vinho branco
+Abaixo iremos avaliar a frequência absoluta no dataset de treino entre vinho tinto e vinho branco
 
 ```{r}
-
 table(as.factor(train$quality), train$Vinho, useNA = "ifany")
 
 table(as.factor(train$quality), train$Vinho)
-
 ```
 
 ```{r}
-
 # 2-Way Cross Tabulation
 
 CrossTable(as.factor(train$quality), train$Vinho) 
- 
-
-
-
 ```
 
 ```{r}
-
 aggregate( train[,-13],
           by = list(train$Vinho),
           FUN = mean)
-
-
 ```
 
 ```{r}
 aggregate(train[,1:13],
          by = list(train$Vinho),
           FUN = median)
-
 ```
 
 ```{r}
-
 mean(train$fixedacidity) # media
-
-
 ```
 
 ```{r}
 median(train$fixedacidity) # mediana
-
-
 ```
 
 ```{r}
-
 quantile(train$fixedacidity,type=4)  # Quartis
-
 ```
 
 ```{r}
-
 quantile(train$fixedacidity,.65,type=4) # exato percentil
-
 ```
 
 ```{r}
-
 range(train$fixedacidity)  # amplitude
-
 ```
 
 ```{r}
-
 diff(range(train$fixedacidity)) #diferen?a entre o maior e o menor valor
-
 ```
 
 ```{r}
-
 min(train$fixedacidity)  # valor m?nimo de x
-
 ```
 
 ```{r}
-
 max(train$fixedacidity)  # valor maximo de x
-
 ```
 
 ```{r}
-
 var(train$fixedacidity) # para obter a variancia
-
 ```
 
 ```{r}
-
 sd(train$fixedacidity)  # para obter o desvio padrao
-
 ```
 
 
@@ -253,13 +350,9 @@ sd(train$fixedacidity)  # para obter o desvio padrao
 CV_fixedacidity<-sd(train$fixedacidity)/mean(train$fixedacidity)*100  
 # para obter o coefiiente de variacao
 CV_fixedacidity
-
-
-
 ```
 
 ```{r}
-
 #comando para gerar em 3 linhas e 4 colunas os histogramas
 par (mfrow=c(3,4))
 hist(fixedacidity)
@@ -279,12 +372,9 @@ hist(quality)
 hist(quality, col=c("pink"), col.main="darkgray", prob=T)
      
 attach(train)
-
-
 ```
 
 ```{r}
-
 #comando para gerar em 3 linhas e 4 colunas os histogramas
 par (mfrow=c(3,4))
 boxplot(fixedacidity, main='fixedacidity')
@@ -302,7 +392,6 @@ boxplot(base$quality, main='quality')
 #dev.off()
 
 boxplot(quality ~ Vinho, main='quality')
-
 ```
 
 ```{r}
@@ -319,12 +408,9 @@ boxplot(density ~ Vinho, main='density')
 boxplot(pH ~ Vinho, main='pH')
 boxplot(sulphates ~ Vinho, main='sulphates')
 boxplot(alcohol ~ Vinho, main='alcohol')
-
-
 ```
 
 ```{r}
-
 # Grafico de dispersao ( pch=caracter, lwd=largura)
 
 plot(freesulfurdioxide~totalsulfurdioxide)
@@ -333,22 +419,17 @@ plot(freesulfurdioxide~totalsulfurdioxide, pch=1, lwd=3)
 plot(freesulfurdioxide~totalsulfurdioxide)
 abline(v=mean(freesulfurdioxide), col="red")
 abline(h=mean(totalsulfurdioxide), col="green")
-
 ```
 
 ```{r}
-
 attach(train)
 train$fx_redSugar <- cut(residualsugar,breaks=c(0,10,20,30,max(residualsugar)))  
 #train$fx_redSugar  
 str(train)
 CrossTable(train$fx_redSugar , train$Vinho) 
-
 ```
 
 ```{r}
-
-
 attach(train)
 
 
@@ -369,7 +450,6 @@ describe(train)
 # skew
 # kurtosis
 # standard error
-
 ```
 
 
@@ -379,26 +459,20 @@ summary(base)
 white <- subset(base, Vinho=="WHITE", select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
                                                  chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
                                                  sulphates,alcohol))
-
 ```
 
 
 
 ```{r}
-
 #Estat?sticas descritivas
 summary(white)
  
 str(white)
 
 attach(white)
- 
-
 ```
 
 ```{r}
-
-
 #Estatasticas descritivas
 
 par (mfrow=c(3,4))
@@ -417,13 +491,9 @@ boxplot(quality, main='quality')
 #dev.off()
 
 boxplot.stats(white$residualsugar)
-
-
-
 ```
 
 ```{r}
-
 AIQ_residualsugar<-quantile(white$residualsugar,.75,type=2)-quantile(white$residualsugar,.25,type=2)
 AIQ_residualsugar
 
@@ -431,12 +501,9 @@ limsup_residualsugar= quantile(white$residualsugar,.75,type=4)+1.5*AIQ_residuals
 limsup_residualsugar
 liminf_residualsugar= quantile(white$residualsugar,.25,type=2)-1.5*AIQ_residualsugar
 liminf_residualsugar
-
-
 ```
 
 ```{r}
-
 #excluir outliers
 
 plot(quality~residualsugar)
@@ -446,43 +513,31 @@ white1<-subset(white, residualsugar<=40)
 #fix(white1)
 
 attach(white1)
-
-
 ```
 
 ```{r}
-
 summary <- summary(white1)
 show(summary)
-
-
 ```
 
 ```{r}
 plot(residualsugar,alcohol)
 abline(v=mean(residualsugar), col="red")
 abline(h=mean(alcohol), col="green")
-
-
 ```
 
 ```{r}
-
 # matriz de correla??es
 matcor <- cor(white1)
 print(matcor, digits = 2)
-
 ```
 
 ```{r}
 corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
-
-
 ```
 
 
 ```{r}
-
 panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
                       ...)  {
   usr <- par("usr")
@@ -496,26 +551,20 @@ panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
   # abs(r) ? para que na sa?da as correla??es ficam proporcionais
   text(0.5, 0.5, txt, cex = cex * abs(r))
 }
-
 ```
 
 
 ```{r}
-
 #pdf(file = "grafico.pdf")
 pairs(white1, lower.panel=panel.smooth, upper.panel=panel.cor)
-
-
 ```
 
 
 ```{r}
-
 install.packages("corrplot")
 library(corrplot)
 
 corrplot::corrplot(matcor, method="circle", order="hclust")
-
 ```
 
 
@@ -525,18 +574,14 @@ plot (x = train$residualsugar, y = train$density,
       main = "Grafico de dispersao",
       xlab = "residualsugar",
       ylab = "density")
-
-
 ```
 
 
 ```{r}
-
 ggplot (data= train, aes(x=train$residualsugar, y=train$density)) + 
   geom_point(size=0.4) +
   geom_smooth(method="lm", color ="red", linetype=2) +
   labs(title = "Grafico de dispersao, residualsugar e density", x="residualsugar", y="density")
-
 ```
 
 ```{r}
@@ -544,50 +589,36 @@ attach(train)
 #names(train)
 modelo1 <- lm(quality ~ citricacid+freesulfurdioxide+pH+fixedacidity+residualsugar+totalsulfurdioxide+sulphates+volatileacidity+chlorides+density+alcohol+fx_redSugar)
 summary(modelo1)
-
 ```
 
 ```{r}
 forward<-step(modelo1,direction="forward")
 forward
 summary(forward)
-
 ```
 
 ```{r}
-
 backward<-step(modelo1,direction="backward")
 backward
 summary(backward)
-
 ```
 
 ```{r}
-
 stepwise<-step(modelo1,direction="both")
  
 stepwise
 summary(stepwise)
-
-
 ```
 
 ```{r}
 # Modelo final.
 modelo_fim <- lm(quality ~ citricacid+freesulfurdioxide+pH+fixedacidity+residualsugar+totalsulfurdioxide+sulphates+volatileacidity+chlorides+density+alcohol+fx_redSugar)
 summary(modelo_fim)
-
-
-
-
 ```
 
 ```{r}
-
-
 Val_pred <- predict(modelo_fim,interval = "prediction", level = 0.95) 
 fix(Val_pred)
-
 ```
 
 ```{r}
@@ -595,46 +626,34 @@ fix(Val_pred)
 fit <- Val_pred[,1] # valores preditos
 lower <- Val_pred[,2] # limite inferior
 upper <- Val_pred[,3] # limite superior
-
-
 ```
 
 ```{r}
 mse <- mean((train$quality - fit)^2)
 sqrt(mse)
-
-
 ```
 
 ```{r}
-
 erro_usando_media <- mean((train$quality - mean(train$quality))^2)
 sqrt(erro_usando_media)
-
 ```
-```{r}
 
+```{r}
 # grafico residuo
 rs <- resid(modelo_fim)
 plot(predict(modelo_fim), rs, xlab = "Preditor linear",ylab = "Residuos")
 abline(h = 0, lty = 2)
-
 ```
+
 ```{r}
 attach(train)
 train_Final<-cbind(train,Val_pred)
 
 fix(train_Final)
 
-
 write.table(file='data/Arquivo_Valorizacao_Ambiental_saida.csv',train_Final,sep=';',dec=',')
-
-
-
-
 ```
+
 ```{r}
-
-
 
 ```
