@@ -9,7 +9,7 @@ Nos Ãºltimos anos o setor vinÃ­cola e os setores de tecnologia estÃ£o sendo foco
 
 ## 1.1. Instalando e carregando as bibliotecas
 
-Remove mensagens de alerta
+Remove mensagens de alerta:
 ```{r}
 options( warn = -1 )
 ```
@@ -173,7 +173,7 @@ summary(train_normalizado)
 
 ###JONAS - COMECEI AQUI
 item 5
- - Verificar as variáveis categoricas e transformá-las em numéricas
+ - Verificar as vari?veis categoricas e transform?-las em num?ricas
 ```{r}
 
 #transformando o campo Vinho na train e test
@@ -185,10 +185,10 @@ View(test)
 ```
 
 item 6
- - Analisar a correlação entre as variáveis com o nosso target para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas
+ - Analisar a correla??o entre as vari?veis com o nosso target para identificar as vari?veis com maior import?ncia, caso necess?rio, fazer itera??es entre elas
 ```{r}
 
-#correlação de todas as variaveis, ordenadas de 1 a -1
+#correla??o de todas as variaveis, ordenadas de 1 a -1
 cor(train$Vinho,train$totalsulfurdioxide)
 cor(train$Vinho,train$freesulfurdioxide)
 cor(train$Vinho,train$residualsugar)
@@ -206,9 +206,9 @@ cor(train$Vinho,train$volatileacidity)
 ```
 
 item 7
- - Possobilidade de utilizar algum método de seleção de variáveis. Por exemplo: stepwise
+ - Possobilidade de utilizar algum m?todo de sele??o de vari?veis. Por exemplo: stepwise
  Item 8
- - Aplicar algoritmo de regressão
+ - Aplicar algoritmo de regress?o
 ```{r}
 attach(train)
 
@@ -216,7 +216,7 @@ attach(train)
 modelo1 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
 summary(modelo1)
 
-##não excluiu nenhuma variavel
+##n?o excluiu nenhuma variavel
 forward<-step(modelo1,direction="forward")
 forward
 summary(forward)
