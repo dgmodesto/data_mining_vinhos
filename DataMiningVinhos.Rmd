@@ -1,0 +1,223 @@
+---
+title: " Análise Exploratória da Base de Vinhos"
+output: html_document
+--- 
+# 1. Introdução
+
+Nos últimos anos o setor vinícola e os setores de tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de análises exploratórias dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinícola com técnicas específicas de data mining e verificar até que ponto esta interligação pode melhorar a tomada de decisão.
+
+
+## 1.1. Instalando e carregando as bibliotecas
+
+Remove mensagens de alerta:
+```{r}
+options( warn = -1 )
+```
+
+Instala as bibliotecas utilizadas para execução do código.
+```{r}
+#install.packages('dplyr')
+#install.packages('readr')
+#install.packages('plotly')
+#install.packages('scales')
+#install.packages("psych")
+#install.packages("corrgram")
+#install.packages('rgdal')
+#install.packages('RColorBrewer')
+#install.packages('sp')
+#install.packages('leaflet')
+#install.packages('bindrcpp')
+#install.packages('magrittr')
+#install.packages('ggplot2')
+#install.packages('lubridate')
+#install.packages('grid') 
+#install.packages('quantile')
+#install.packages('hexbin')
+#install.packages('gmodels')
+#install.packages('psych')
+#install.packages('standardize')
+```
+
+Carrega as bibliotecas utilizadas para execução do código.
+
+```{r}
+library('dplyr')
+library('readr')
+library('plotly')
+library('scales')
+library('hexbin')
+library('rgdal')
+library('RColorBrewer')
+library('sp')
+library('leaflet')
+library('bindrcpp')
+library('magrittr')
+library('dplyr')
+library('ggplot2')
+library('lubridate')
+library('grid') 
+library('gmodels')
+library('psych')
+library('corrgram')
+library('standardize')
+```
+
+
+## 1.2. Carregando a base de dados
+
+Base de dados *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição.
+```{r }
+base = read.csv2("data/base.csv")
+```
+
+Mostra até duas casas decimais
+```{r}
+options("scipen" = 2)
+```
+
+Dividindo o dataset em 30% Teste e 70% Treino
+```{r}
+## 70% do tamanho da base
+smp_size <- floor(0.7 * nrow(base))
+
+## coloca o seed para fazer sua partição reproduzível
+set.seed(1)
+train_ind <- sample(seq_len(nrow(base)), size = smp_size)
+
+train <- base[train_ind, ]
+test <- base[-train_ind, ]
+```
+
+
+## 1.3. Estrutura de Dados
+
+Visualizando a estrutura geral do conjuntos de dados, usando o comando summary. Primeiro para os dados de treino:
+```{r}
+summary(train)
+```
+
+E então para os dados de teste:
+```{r}
+summary(test)
+```
+
+Mostra as colunas que temos no Dataset e suas respectivas medidas, como, por exemplo, máximo, mínimo, média, mediana etc. Base de treino:
+```{r}
+describe(train)
+```
+
+Base de teste:
+```{r}
+describe(test)
+```
+
+Identifica os tipos de dados das propriedades do dataset na base de treino:
+```{r}
+class(train$id_vinho)
+class(train$fixedacidity)
+class(train$volatileacidity)
+class(train$citricacid)
+class(train$residualsugar)
+class(train$chlorides)
+class(train$freesulfurdioxide)
+class(train$totalsulfurdioxide)
+class(train$density)
+class(train$pH)
+class(train$sulphates)
+class(train$alcohol)
+class(train$quality)
+class(train$Vinho)
+```
+
+Base de teste:
+```{r}
+class(test$id_vinho)
+class(test$fixedacidity)
+class(test$volatileacidity)
+class(test$citricacid)
+class(test$residualsugar)
+class(test$chlorides)
+class(test$freesulfurdioxide)
+class(test$totalsulfurdioxide)
+class(test$density)
+class(test$pH)
+class(test$sulphates)
+class(test$alcohol)
+class(test$quality)
+class(test$Vinho)
+```
+
+Agora verificamos se há valores nulos em ambas as bases (treino e teste) para um possível tratamento:
+```{r}
+sum(is.na(train))
+```
+```{r}
+sum(is.na(test))
+```
+
+## 1.4. Normalização de Dados
+
+Possuímos uma variável categórica, da qual transformaremos em numérica para melhor trabalharmos em cima de nossos algoritmos. A variável é VINHO, que possui os valores "RED" e "WHITE":
+```{r}
+#transformando o campo Vinho na train e test
+train$Vinho = as.numeric(train$Vinho)
+test$Vinho = as.numeric(test$Vinho)
+
+View(train)
+View(test)
+```
+
+Aqui ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos:
+```{r}
+train_normalizado = (train-min(train))/(max(train)-min(train))
+
+summary(train_normalizado)
+```
+
+## 1.5 Aplicação de Algoritmos
+
+Analisar a correlação entre as variáveis com o nosso target para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas:
+```{r}
+#correlação de todas as variáveis, ordenadas de 1 a -1
+cor(train$Vinho,train$totalsulfurdioxide)
+cor(train$Vinho,train$freesulfurdioxide)
+cor(train$Vinho,train$residualsugar)
+cor(train$Vinho,train$citricacid)
+cor(train$Vinho,train$quality)
+cor(train$Vinho,train$alcohol)
+cor(train$Vinho,train$id_vinho)
+cor(train$Vinho,train$pH)
+cor(train$Vinho,train$density)
+cor(train$Vinho,train$sulphates)
+cor(train$Vinho,train$fixedacidity)
+cor(train$Vinho,train$chlorides)
+cor(train$Vinho,train$volatileacidity)
+```
+
+Utilizamos o método StepWise para seleção de variáveis e aplicar um algoritmo de regressão linear:
+```{r}
+attach(train)
+
+#modelo com todas as variáveis
+modelo1 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
+summary(modelo1)
+
+#não excluiu nenhuma variável
+forward<-step(modelo1,direction="forward")
+forward
+summary(forward)
+
+#excluiu a variável id_vinho
+backward<-step(modelo1,direction="backward")
+backward
+summary(backward)
+
+#excluiu a variável id_vinho
+stepwise<-step(modelo1,direction="both")
+stepwise
+summary(stepwise)
+
+#modelo sem a variável id_vinho
+modelo2 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
+summary(modelo2)
+```

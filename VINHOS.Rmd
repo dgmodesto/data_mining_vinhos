@@ -1,5 +1,5 @@
 ---
-title: " Análise Exploratória dos Dados de Táxi de NYC"
+title: " Análise Exploratória da Base de Vinhos"
 output: html_document
 --- 
 # 1. Introdução
