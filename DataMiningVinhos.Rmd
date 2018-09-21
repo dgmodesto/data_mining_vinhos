@@ -89,7 +89,10 @@ Mostra as colunas que temos no Dataset e suas respectivas medidas, como, por exe
 describe(base)
 ```
 
-Identifica os tipos de dados das propriedades do dataset:
+Na tabela apresentada acima conseguimos visualizar algumas informações interessantes. Por exemplo, podemos verificar a média, mediana, valores mínimos, valores máximos entre outras informações de cada propriedade do nosso dataset. 
+
+
+Agora que conhecemos nossos valores iremos dentificar os tipos de dados das propriedades do dataset:
 ```{r}
 class(base$id_vinho)
 class(base$fixedacidity)
@@ -107,30 +110,43 @@ class(base$quality)
 class(base$Vinho)
 ```
 
+Com exceção da propriedade Vinho, todas as outras propriedades são númericas inteiros e reais.
+
+
 ### Item 3
-Agora verificamos se há valores nulos ns base para um possível tratamento:
+Neste momento iremos verificamos se há valores nulos na base para um possível tratamento, caso haja valores nulos em alguma propriedade nesta base, poderiamos por exemplo utilizar o valor da média ou mediana para substitiuir esses valores nulo e assim manter a base completa.
 ```{r}
 sum(is.na(base))
 ```
 
+
+O codigo acima responsável por buscar valores nulos na base, mostrou que não há valores nulos ou vazios nesta base, com isso, não será necessário realizar algum tratramento nessa base.
+
 ## 1.4. Normalização de Dados
-### Item 4
 
-Aqui ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos:
-```{r}
-train_normalizado = (train-min(base))/(max(base)-min(base))
-
-summary(train_normalizado)
-```
 
 ### Item 5
 Possuímos uma variável categórica, da qual transformaremos em numérica para melhor trabalharmos em cima de nossos algoritmos. A variável é VINHO, que possui os valores "RED" e "WHITE":
 ```{r}
 #transformando o campo Vinho
-train$Vinho = as.numeric(base$Vinho)
+base$Vinho = as.numeric(base$Vinho)
 
-View(base)
+head(base)
 ```
+
+### Item 4
+Como falamos anteriormente, há alguns valores discrepantes nesta base de dados, com tudo, precisamos realizar alguma técnica de normalização para estes dados com a necessidade de harmonizar as escalas, então, optamos por utilizar a tecnica de normalização Min-Max.
+
+No código abaixo ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos, mas antes disso foi necessário alterar nossa variável categorica Vinho em valor numérico.
+
+```{r}
+train_normalizado = (base-min(base))/(max(base)-min(base))
+
+head(train_normalizado)
+```
+
+Depois de aplicar o comando de normalização min-max, e feito a harmonização dos dados, já podemos ver que os dados estão todos na mesma scala entre Zero e Um. Este processo corresponde na verdade à adaptação de scalas  que fazemos ao criar um gráfico de eixos X e Y com duas grandezas muito bem definidda
+
 
 ## 1.5 Aplicação de Algoritmos
 ### Item 6
@@ -138,19 +154,20 @@ View(base)
 Analisar a correlação entre as variáveis com o nosso target para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas:
 ```{r}
 #correlação de todas as variáveis, ordenadas de 1 a -1
-cor(train$Vinho,base$totalsulfurdioxide)
-cor(train$Vinho,base$freesulfurdioxide)
-cor(train$Vinho,base$residualsugar)
-cor(train$Vinho,base$citricacid)
-cor(train$Vinho,base$quality)
-cor(train$Vinho,base$alcohol)
-cor(train$Vinho,base$id_vinho)
-cor(train$Vinho,base$pH)
-cor(train$Vinho,base$density)
-cor(train$Vinho,base$sulphates)
-cor(train$Vinho,base$fixedacidity)
-cor(train$Vinho,base$chlorides)
-cor(train$Vinho,base$volatileacidity)
+cor(base$Vinho,base$totalsulfurdioxide)
+cor(base$Vinho,base$totalsulfurdioxide)
+cor(base$Vinho,base$freesulfurdioxide)
+cor(base$Vinho,base$residualsugar)
+cor(base$Vinho,base$citricacid)
+cor(base$Vinho,base$quality)
+cor(base$Vinho,base$alcohol)
+cor(base$Vinho,base$id_vinho)
+cor(base$Vinho,base$pH)
+cor(base$Vinho,base$density)
+cor(base$Vinho,base$sulphates)
+cor(base$Vinho,base$fixedacidity)
+cor(base$Vinho,base$chlorides)
+cor(base$Vinho,base$volatileacidity)
 ```
 
 ### Item 7
@@ -173,26 +190,36 @@ test <- base[-train_ind, ]
 Utilizamos o método StepWise para seleção de variáveis e aplicar um algoritmo de regressão linear:
 ```{r}
 attach(train)
+```
 
+```{r}
 #modelo com todas as variáveis
 modelo1 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
 summary(modelo1)
+```
 
+```{r}
 #não excluiu nenhuma variável
 forward<-step(modelo1,direction="forward")
 forward
 summary(forward)
+```
 
+```{r}
 #excluiu a variável id_vinho
 backward<-step(modelo1,direction="backward")
 backward
 summary(backward)
+```
 
+```{r}
 #excluiu a variável id_vinho
 stepwise<-step(modelo1,direction="both")
 stepwise
 summary(stepwise)
+```
 
+```{r}
 #modelo sem a variável id_vinho
 modelo2 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
 summary(modelo2)
