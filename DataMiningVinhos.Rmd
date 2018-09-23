@@ -14,7 +14,7 @@ Remove mensagens de alerta:
 options( warn = -1 )
 ```
 
-Instala as bibliotecas utilizadas para execução do código.
+Instala as bibliotecas utilizadas para execução do código:
 ```{r}
 #install.packages('dplyr')
 #install.packages('readr')
@@ -36,10 +36,12 @@ Instala as bibliotecas utilizadas para execução do código.
 #install.packages('gmodels')
 #install.packages('psych')
 #install.packages('standardize')
+#install.packages("corrplot")
+#install.packages('tree')
+#install.packages('party')
 ```
 
-Carrega as bibliotecas utilizadas para execução do código.
-
+Carrega as bibliotecas utilizadas para execução do código:
 ```{r}
 library('dplyr')
 library('readr')
@@ -60,17 +62,20 @@ library('gmodels')
 library('psych')
 library('corrgram')
 library('standardize')
+library('corrplot')
+library('tree')
+library('party')
 ```
 
 
 ## 1.2. Carregando a base de dados
 
-Base de dados de Vinhos para ser carregado em memória. Será dividida em *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição.
+Base de dados de Vinhos para ser carregado em memória. Será dividida em *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição:
 ```{r }
 base = read.csv2("data/base.csv")
 ```
 
-Mostra até duas casas decimais
+Mostra até duas casas decimais:
 ```{r}
 options("scipen" = 2)
 ```
@@ -84,15 +89,17 @@ summary(base)
 ```
 
 ### Item 2
-Mostra as colunas que temos no Dataset e suas respectivas medidas, como, por exemplo, máximo, mínimo, média, mediana etc:
+O comando abaixo nos ajuda a conhecer quais são as propriedades do dataset e seus respectivos valores.
 ```{r}
 describe(base)
 ```
 
 Na tabela apresentada acima conseguimos visualizar algumas informações interessantes. Por exemplo, podemos verificar a média, mediana, valores mínimos, valores máximos entre outras informações de cada propriedade do nosso dataset. 
 
+______________________________________________________________________________________________________
 
-Agora que conhecemos nossos valores iremos dentificar os tipos de dados das propriedades do dataset:
+
+Agora que conhecemos nossos valores iremos identificar os tipos de dados das propriedades do dataset:
 ```{r}
 class(base$id_vinho)
 class(base$fixedacidity)
@@ -110,20 +117,26 @@ class(base$quality)
 class(base$Vinho)
 ```
 
-Com exceção da propriedade Vinho, todas as outras propriedades são númericas inteiros e reais.
+Com exceção da propriedade Vinho, todas as outras propriedades são númericas (inteiros e reais).
+
+
+______________________________________________________________________________________________________
+
 
 
 ### Item 3
-Neste momento iremos verificamos se há valores nulos na base para um possível tratamento, caso haja valores nulos em alguma propriedade nesta base, poderiamos por exemplo utilizar o valor da média ou mediana para substitiuir esses valores nulo e assim manter a base completa.
+Neste momento verificaremos se há valores nulos na base para um possível tratamento, caso haja valores nulos em alguma propriedade nesta base, poderíamos, por exemplo, utilizar o valor da média ou mediana para substitiuir esses valores nulo e assim manter a base completa.
 ```{r}
 sum(is.na(base))
 ```
 
+O código acima é responsável por buscar valores nulos na base, mostrou que não há valores nulos ou vazios nesta base, com isso, não será necessário realizar nenhum tratramento na base.
 
-O codigo acima responsável por buscar valores nulos na base, mostrou que não há valores nulos ou vazios nesta base, com isso, não será necessário realizar algum tratramento nessa base.
+
+______________________________________________________________________________________________________
+
 
 ## 1.4. Normalização de Dados
-
 
 ### Item 5
 Possuímos uma variável categórica, da qual transformaremos em numérica para melhor trabalharmos em cima de nossos algoritmos. A variável é VINHO, que possui os valores "RED" e "WHITE":
@@ -135,7 +148,10 @@ head(base)
 ```
 
 ### Item 4
-Como falamos anteriormente, há alguns valores discrepantes nesta base de dados, com tudo, precisamos realizar alguma técnica de normalização para estes dados com a necessidade de harmonizar as escalas, então, optamos por utilizar a tecnica de normalização Min-Max.
+Como falamos anteriormente, existem alguns valores discrepantes nesta base de dados, com tudo, precisamos realizar alguma técnica de normalização para estes dados com a necessidade de harmonizar as escalas, então, optamos por utilizar a tecnica de normalização Min-Max.
+
+______________________________________________________________________________________________________
+
 
 No código abaixo ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos, mas antes disso foi necessário alterar nossa variável categorica Vinho em valor numérico.
 
@@ -145,16 +161,18 @@ train_normalizado = (base-min(base))/(max(base)-min(base))
 head(train_normalizado)
 ```
 
-Depois de aplicar o comando de normalização min-max, e feito a harmonização dos dados, já podemos ver que os dados estão todos na mesma scala entre Zero e Um. Este processo corresponde na verdade à adaptação de scalas  que fazemos ao criar um gráfico de eixos X e Y com duas grandezas muito bem definidda
+Depois de aplicar o comando de normalização min-max é feita a harmonização dos dados, já podemos ver que os dados estão todos na mesma escala, entre Zero e Um. Este processo corresponde na verdade à adaptação de escalas que fazemos ao criar um gráfico de eixos X e Y com duas grandezas muito bem definidas.
+
+
+______________________________________________________________________________________________________
 
 
 ## 1.5 Aplicação de Algoritmos
 ### Item 6
 
-Analisar a correlação entre as variáveis com o nosso target para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas:
+Analisar a correlação entre as variáveis com o nosso target (Vinho) para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas:
 ```{r}
 #correlação de todas as variáveis, ordenadas de 1 a -1
-cor(base$Vinho,base$totalsulfurdioxide)
 cor(base$Vinho,base$totalsulfurdioxide)
 cor(base$Vinho,base$freesulfurdioxide)
 cor(base$Vinho,base$residualsugar)
@@ -170,9 +188,47 @@ cor(base$Vinho,base$chlorides)
 cor(base$Vinho,base$volatileacidity)
 ```
 
+As variáveis com maior correlação ao nosso target são "Total de dióxido de enxofre" e "acidez volátil". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
+
+```{r}
+#matriz de correlações
+
+matcor <- cor(white1)
+print(matcor, digits = 2)
+
+corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
+```
+
+```{r}
+#Função para que as correlações fiquem proporcionais na saída
+panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
+                      ...)  {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- cor(x, y , use = "pairwise.complete.obs")
+  txt <- format(c(r, 0.123456789), digits = digits) [1]
+  txt <- paste(prefix, txt, sep = "")
+  if (missing(cex.cor))
+    cex <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex * abs(r))
+}
+```
+
+```{r}
+#plotando o gráfico de correlações
+corrplot::corrplot(matcor, method="circle", order="hclust")
+```
+
 ### Item 7
 
-Dividindo o dataset em 30% Teste e 70% Treino
+Iremos dividir nosso Dataset em duas partes que nomearemos como base de treino "train" e teste "test". Será dividido da seguinte forma: 30% será reservado para a base de teste e os outros 70% para a base de treino. O ideal é podermos treinar nossos algoritmos com nossa base de treino e depois de chegar a um resultado que seja satisfatório realizar testes com os 30% separados para a base de teste.
+
+
+______________________________________________________________________________________________________
+
+
+Dividindo o dataset em 30% Teste e 70% Treino:
 ```{r}
 ## 70% do tamanho da base
 smp_size <- floor(0.7 * nrow(base))
@@ -187,24 +243,77 @@ test <- base[-train_ind, ]
 
 ### Item 8
 
-Utilizamos o método StepWise para seleção de variáveis e aplicar um algoritmo de regressão linear:
+Utilizaremos o método stepwise para realzar a seleção de variáveis. Este método é muito utilizado para a técnica de regressão linear.
+
+Procedimentos para seleção ou exclusão de variáveis de um modelo é baseado em um algoritmo que checa a importância das variáveis incluindo ou excluindo-as do modelo se baseando em uma regra de decisão.
+
+
+______________________________________________________________________________________________________
+
+
+O commado attach anexa nosso Dataset ao caminho de pesquisa do R. Isso significa que o dataset é pesquisado por uma variável, portanto os objetos no dataset podem ser acessados simplesmente fornecendo seus nomes.
+
 ```{r}
 attach(train)
 ```
 
+A função utilizada para construir modelos lineares de regressão é a função lm() que tem os seguintes argumentos principais lm(formula, data, weights, subset, na.action).
+
+______________________________________________________________________________________________________
+
+
+Digamos que Vinho seja nosso Y e os outros atributos sejam nosso X. Então podemos ler os argumentos abaixo da seguinte forma:
+ * Y ~ X1 + X2 +  ... + Xn : Indica -> Modele Y como função estatística das variáveis X1 + X2 +  ... + Xn - 
+ * Isto é efeito aditivo dos modelos lineares.
+
+#abaixo segue modelo com todas os atributos do dataset
 ```{r}
-#modelo com todas as variáveis
 modelo1 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
 summary(modelo1)
 ```
 
+A funçao summary executada acima apresenta um resumo do modelo linear com: 
+  * Chamada do modelo
+  * Medidas resumo dos resíduos
+  * Tabela de coeficientes, desvios padrões e testes T para hipótese nula de parâmetros iguais a zero.
+  * Média dos quadrados do resíduo e os respectivos graus de liberdade; R2 e R2 ajustado da regressão;
+  * Estatística F para qualidade do ajuste (comparação com o modelo com apenas o intercepto).
+
+______________________________________________________________________________________________________
+
+
+Uma parte importante da modelagem dos dados é a redução dos modelos. A função "anova()" compara dois ou mais modelos encaixados por meio da estatística F (por padrão), especialmente indicadas para modelos lineares normais. Esta função "anova()" apresenta a tabela de análise de variância, tendo as variáveis preditoras como fatores.
+
 ```{r}
-#não excluiu nenhuma variável
+anova(modelo1)
+```
+
+Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.02484, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
+
+
+______________________________________________________________________________________________________
+
+
+
+A seleção forward parte da suposição de que não há variável no modelo, apenas o intercepto. A ideia do método é adicionar uma variável de cada vez. A primeira variável selecionada é aquela com maior correlação com a resposta.
+
+```{r}
+
 forward<-step(modelo1,direction="forward")
 forward
 summary(forward)
 ```
 
+Para determinar a entrada das variáveis no modelo o teste F é comparado com critério de estabilização e as outras variáveis são determinadas pelo valor do coeficiente de correlação parcial.
+
+Devido aos bons resultados obtidos no método utilizado acima, a função incluiu todas as variáveis do modelo.
+
+
+______________________________________________________________________________________________________
+
+
+
+Diferente da função forward, a função backward começa com todas as variáveis no modelo e elimina  a variável que apresentar ser maior para o critério. A variável com menor valor de correlação parcial é escolhida para sair do modelo.
 ```{r}
 #excluiu a variável id_vinho
 backward<-step(modelo1,direction="backward")
@@ -212,15 +321,193 @@ backward
 summary(backward)
 ```
 
+Conforme mencionado anterioremente a função remove a propriedade com menor valor de correlação parcial, a função backward removeu a propriedade id_vinho que apresentou o valor de  0.030, por ela ter o menor valor de correlação parcial dentro do modelo.
+
+
+______________________________________________________________________________________________________
+
+
+
+Quando informado a direction "both", a função step irá aplicar tanto o forward quanto o backward no modelo, como segue abaixo.
 ```{r}
-#excluiu a variável id_vinho
 stepwise<-step(modelo1,direction="both")
 stepwise
 summary(stepwise)
 ```
 
+Podemos observar que a propriedade id_vinho não esta mais neste modelo, o que confirma a afirmação feita que both aplica os dois métodos mencionados. forward manteve todas as variáveis no modelo e backward removeu a proporiedade id_vinho por que ela tinha o menor valor de correlação parcial dentro do modelo.
+
+______________________________________________________________________________________________________
+
+
+Abaixo a criação do nosso novo modelo sem a variável id_vinho.
 ```{r}
 #modelo sem a variável id_vinho
 modelo2 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
 summary(modelo2)
 ```
+
+### Item 9
+
+```{r}
+#Criando a variável fx_redSugar
+train$fx_redSugar <- cut(residualsugar,breaks=c(0,10,20,30,max(residualsugar)))  
+str(train)
+CrossTable(train$fx_redSugar , train$Vinho)
+```
+
+*Incluir analise do codigo acima
+
+______________________________________________________________________________________________________
+
+
+Os Outliers são dados quen não se enquadram na normalidade e que talvez possa causar anomalias nos resultados obtidos por meio de algoritmos. Os outliers podem viesar negativamente todo o resultado de uma análise.
+
+Devido a isso iremos remover os valores discrepantes do nosso modelo, como segue o codigo abaixo.
+
+```{r}
+#removendo os outliers
+residual_sugar <- subset(train, select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
+                                        chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
+                                        sulphates,alcohol))
+
+AIQ_residualsugar<-quantile(residual_sugar$fixedacidity,.75,type=2)-quantile(residual_sugar$fixedacidity,.25,type=2)
+AIQ_residualsugar
+
+limsup_residualsugar= quantile(residual_sugar$fixedacidity,.75,type=4)+1.5*AIQ_residualsugar
+limsup_residualsugar
+liminf_residualsugar= quantile(residual_sugar$fixedacidity,.25,type=2)-1.5*AIQ_residualsugar
+liminf_residualsugar
+
+residual_sugar_1<-subset(residual_sugar, fixedacidity<=40)
+
+summary <- summary(residual_sugar_1)
+show(summary)
+```
+
+
+* Não sei como analisar o resultado acima - verificar
+
+______________________________________________________________________________________________________
+
+
+#ARVORE DE DECISÃO
+
+Árvore de decisão é um modelo gráfico que pode ser desenhado geralmente em forma de fluxogramas ou diagramas. Essa representação auxilia a explorar todas as alternativas de uma determinada decisão e seus possíveis resultados.
+
+
+```{r}
+#modelo de árvore de decisão
+
+#ajustando o modelo da árvore
+arvore_ajustada <- tree(factor(quality) ~ density, data = train)
+summary(arvore_ajustada)
+
+#plotando
+plot(arvore_ajustada)
+text(arvore_ajustada, pretty = 0)
+
+```
+
+```{r}
+#outra modelo de árvore de decisão com a biblioteca party
+
+# Criando a árvore
+
+arvore.output <- ctree(
+  train$quality ~ train$density, 
+  data = train)
+
+#Mostrando a árvore
+plot(arvore.output)
+```
+
+### Item 10
+
+```{r}
+#modelo de regressão logística
+
+reg_logistica <- glm(quality ~ density, data = train)
+
+summary(reg_logistica)
+```
+
+```{r}
+table(train$quality, predict(reg_logistica) > 0.5)
+```
+
+```{r}
+#Aqui outro estudo como os de cima, mas com outra variável, para ver a saída do gráfico
+
+#usei o chlorides porque só podem ser números de 0 a 1 para o Y
+ajuste_glm <- glm(chlorides ~ quality, data = train, family = binomial)
+summary(ajuste_glm)
+```
+
+```{r}
+# Ligaçao probit
+#summary(train)
+
+reg_logistica_probit <- glm(chlorides ~ quality, data = train, family = binomial(link = "probit"))
+summary(reg_logistica_probit)
+```
+
+```{r}
+#Exibindo o gráfico de curvas ajustasdas
+
+ggplot(train, aes(x=quality, y=chlorides)) + 
+  geom_point() + 
+  stat_smooth(aes(colour = "Logit"), method="glm", family=binomial, se=FALSE) +
+  stat_smooth(aes(colour = "Probit"), method="glm", family=binomial(link = "probit"), se=FALSE) +
+  stat_smooth(aes(colour = "Complementar Log-Log"), method="glm", family=binomial(link = "cloglog"), se=FALSE) +
+  labs(colour = "Função de ligação")
+
+```
+
+```{r}
+#aqui estou usando o teste chi quadrado, que é o mais indicado para regressão logística
+
+anova(ajuste_glm, test="Chisq")
+```
+
+### Item 11
+
+```{r}
+#Análise de resíduos
+modelo_residuo <- lm(quality ~ citricacid+fixedacidity+volatileacidity+citricacid+residualsugar+chlorides+freesulfurdioxide+totalsulfurdioxide+density+pH+sulphates+alcohol)
+
+grafico_residuo <- resid(modelo_residuo)
+plot(predict(modelo_residuo), grafico_residuo, xlab = "Preditor linear",ylab = "Resíduos")
+abline(h = 0, lty = 2)
+```
+
+### Item 12
+
+```{r}
+#avaliação de acurácia e verificação de taxas de erro
+
+modelo_acuracia <- lm(quality ~ citricacid+fixedacidity+volatileacidity+citricacid+residualsugar+chlorides+freesulfurdioxide+totalsulfurdioxide+density+pH+sulphates+alcohol)
+
+#criando o intervalo de confiança com os valores preditos
+Val_pred <- predict(modelo_acuracia,interval = "prediction", level = 0.95) 
+fix(Val_pred)
+
+fit <- Val_pred[,1] # valores preditos
+lower <- Val_pred[,2] # limite inferior
+upper <- Val_pred[,3] # limite superior
+
+mse <- mean((train$quality - fit)^2)
+sqrt(mse)
+```
+
+### Item 13
+```{r}
+#simulação de previsão para o Vinho
+
+train_Final<-cbind(train,Val_pred)
+
+fix(train_Final)
+```
+
+### Item 14
+## Considerações Finais
