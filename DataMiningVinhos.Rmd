@@ -170,30 +170,30 @@ ________________________________________________________________________________
 ## 1.5 Aplicação de Algoritmos
 ### Item 6
 
-Analisar a correlação entre as variáveis com o nosso target (Vinho) para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas:
+Analisar a correlação entre as variáveis com o nosso target (quality) para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas:
 ```{r}
 #correlação de todas as variáveis, ordenadas de 1 a -1
-cor(base$Vinho,base$totalsulfurdioxide)
-cor(base$Vinho,base$freesulfurdioxide)
-cor(base$Vinho,base$residualsugar)
-cor(base$Vinho,base$citricacid)
-cor(base$Vinho,base$quality)
-cor(base$Vinho,base$alcohol)
-cor(base$Vinho,base$id_vinho)
-cor(base$Vinho,base$pH)
-cor(base$Vinho,base$density)
-cor(base$Vinho,base$sulphates)
-cor(base$Vinho,base$fixedacidity)
-cor(base$Vinho,base$chlorides)
-cor(base$Vinho,base$volatileacidity)
+cor(base$quality,base$totalsulfurdioxide)
+cor(base$quality,base$freesulfurdioxide)
+cor(base$quality,base$residualsugar)
+cor(base$quality,base$citricacid)
+cor(base$quality,base$alcohol)
+cor(base$quality,base$id_vinho)
+cor(base$quality,base$pH)
+cor(base$quality,base$density)
+cor(base$quality,base$sulphates)
+cor(base$quality,base$fixedacidity)
+cor(base$quality,base$chlorides)
+cor(base$quality,base$volatileacidity)
+cor(base$quality,base$Vinho)
 ```
 
-As variáveis com maior correlação ao nosso target são "Total de dióxido de enxofre" e "acidez volátil". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
+As variáveis com maior correlação ao nosso target é "Alchool" e "densidade". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
 
 ```{r}
 #matriz de correlações
 
-matcor <- cor(white1)
+matcor <- cor(base)
 print(matcor, digits = 2)
 
 corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
@@ -220,6 +220,12 @@ panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
 corrplot::corrplot(matcor, method="circle", order="hclust")
 ```
 
+
+Diferente do gráfico de correlação corrgram, o gráfico acima feito com o corrplot, tem a vantagem de expor as correlações de uma forma mais orgranizada, facilitando um pouco mais a visualização das correlações entre as propriedades do nosso dataset.
+
+______________________________________________________________________________________________________
+
+
 ### Item 7
 
 Iremos dividir nosso Dataset em duas partes que nomearemos como base de treino "train" e teste "test". Será dividido da seguinte forma: 30% será reservado para a base de teste e os outros 70% para a base de treino. O ideal é podermos treinar nossos algoritmos com nossa base de treino e depois de chegar a um resultado que seja satisfatório realizar testes com os 30% separados para a base de teste.
@@ -228,7 +234,8 @@ Iremos dividir nosso Dataset em duas partes que nomearemos como base de treino "
 ______________________________________________________________________________________________________
 
 
-Dividindo o dataset em 30% Teste e 70% Treino:
+Abaixo iremos dividir o dataset em 30% Teste e 70% Treino.
+
 ```{r}
 ## 70% do tamanho da base
 smp_size <- floor(0.7 * nrow(base))
@@ -262,13 +269,13 @@ A função utilizada para construir modelos lineares de regressão é a função
 ______________________________________________________________________________________________________
 
 
-Digamos que Vinho seja nosso Y e os outros atributos sejam nosso X. Então podemos ler os argumentos abaixo da seguinte forma:
+Digamos que Quality seja nosso Y e os outros atributos sejam nosso X. Então podemos ler os argumentos abaixo da seguinte forma:
  * Y ~ X1 + X2 +  ... + Xn : Indica -> Modele Y como função estatística das variáveis X1 + X2 +  ... + Xn - 
  * Isto é efeito aditivo dos modelos lineares.
 
 #abaixo segue modelo com todas os atributos do dataset
 ```{r}
-modelo1 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
+modelo1 <- lm(quality ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity+Vinho)
 summary(modelo1)
 ```
 
@@ -288,7 +295,7 @@ Uma parte importante da modelagem dos dados é a redução dos modelos. A funç�
 anova(modelo1)
 ```
 
-Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.02484, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
+Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.14, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
 
 
 ______________________________________________________________________________________________________
@@ -341,27 +348,36 @@ ________________________________________________________________________________
 
 
 Abaixo a criação do nosso novo modelo sem a variável id_vinho.
+
 ```{r}
 #modelo sem a variável id_vinho
-modelo2 <- lm(Vinho ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+quality+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity)
+modelo2 <- lm(quality ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity+Vinho)
 summary(modelo2)
 ```
 
 ### Item 9
 
 ```{r}
-#Criando a variável fx_redSugar
-train$fx_redSugar <- cut(residualsugar,breaks=c(0,10,20,30,max(residualsugar)))  
+#Criando a variável fx_alcohol
+train$fx_alcohol <- cut(alcohol,breaks=c(0,5,10,15,max(alcohol)))  
 str(train)
-CrossTable(train$fx_redSugar , train$Vinho)
+CrossTable(train$fx_alcohol , train$quality, type = "r")
 ```
 
-*Incluir analise do codigo acima
+A função crosstable tem diversos tipos de saida, que segue relacionado abaixo:
+  * f requência - contagem de frequência
+  * r  - proporção dentro da linha
+  * c  - proporção dentro da coluna
+  * j  - proporção dentro das 2 dimensões finais da tabela
+  * t  - proporção de toda a tabela
+
+Utilizamos o tipo "r" para visualizar a proporção de qualidade por cada grupo de alchool criado no codigo acima. Apos análise do resultado acima, conseguimos observar que no grupo de alcool entre 10 e 15, é onde se encontra a maior proporção de vinhos de qualidade. Isso mostra que a qualidade do vinho é diretamente relacionada com seu teor alcoolico.
+
 
 ______________________________________________________________________________________________________
 
 
-Os Outliers são dados quen não se enquadram na normalidade e que talvez possa causar anomalias nos resultados obtidos por meio de algoritmos. Os outliers podem viesar negativamente todo o resultado de uma análise.
+Os Outliers são dados que não se enquadram na normalidade e que talvez possa causar anomalias nos resultados obtidos por meio de algoritmos. Os outliers podem viesar negativamente todo o resultado de uma análise.
 
 Devido a isso iremos remover os valores discrepantes do nosso modelo, como segue o codigo abaixo.
 
@@ -369,27 +385,32 @@ Devido a isso iremos remover os valores discrepantes do nosso modelo, como segue
 #removendo os outliers
 residual_sugar <- subset(train, select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
                                         chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
-                                        sulphates,alcohol))
+                                        sulphates,Vinho, alcohol))
 
-AIQ_residualsugar<-quantile(residual_sugar$fixedacidity,.75,type=2)-quantile(residual_sugar$fixedacidity,.25,type=2)
+AIQ_residualsugar<-quantile(residual_sugar$alcohol,.75,type=2)-quantile(residual_sugar$alcohol,.25,type=2)
 AIQ_residualsugar
 
-limsup_residualsugar= quantile(residual_sugar$fixedacidity,.75,type=4)+1.5*AIQ_residualsugar
+limsup_residualsugar= quantile(residual_sugar$alcohol,.75,type=4)+1.5*AIQ_residualsugar
 limsup_residualsugar
-liminf_residualsugar= quantile(residual_sugar$fixedacidity,.25,type=2)-1.5*AIQ_residualsugar
+liminf_residualsugar= quantile(residual_sugar$alcohol,.25,type=2)-1.5*AIQ_residualsugar
 liminf_residualsugar
 
-residual_sugar_1<-subset(residual_sugar, fixedacidity<=40)
+residual_sugar_1<-subset(residual_sugar, alcohol>5)
 
 summary <- summary(residual_sugar_1)
 show(summary)
 ```
 
 
-* Não sei como analisar o resultado acima - verificar
+Conforme mencionado anteriormente os vinhos de maior qualidade estão concentrados onde o alcool tem seu valor de 5 até 15. Focando nesses fatos, aplicamos o algoritmo para remover os outliers onde o valor de alcool fosse menor que 5, pois nesse range o alcool não tem impacto expressivo na qualidade do Vinho.
 
+Abaixo iremos mostrar novamente como ficará no crosstable sem os outliers
 ______________________________________________________________________________________________________
-
+```{r}
+fx_alcohol2 <- cut(residual_sugar_1$alcohol,breaks=c(0,5,10,15,max(residual_sugar_1$alcohol)))  
+str(train)
+CrossTable(fx_alcohol2 , residual_sugar_1$quality, type = "r")
+```
 
 #ARVORE DE DECISÃO
 
@@ -397,19 +418,7 @@ ________________________________________________________________________________
 
 
 ```{r}
-#modelo de árvore de decisão
 
-#ajustando o modelo da árvore
-arvore_ajustada <- tree(factor(quality) ~ density, data = train)
-summary(arvore_ajustada)
-
-#plotando
-plot(arvore_ajustada)
-text(arvore_ajustada, pretty = 0)
-
-```
-
-```{r}
 #outra modelo de árvore de decisão com a biblioteca party
 
 # Criando a árvore
@@ -421,6 +430,16 @@ arvore.output <- ctree(
 #Mostrando a árvore
 plot(arvore.output)
 ```
+
+Estamos utilizando a variável "density" porque ela tem uma alta correlação com a qualidade do vinho onde define qual é o "Corpo do vinho".
+
+Quando falamos em corpo do vinho, nos referimos a sensação de maior ou menor densidade que a bebida apresenta na boca.
+
+Podemos classificar a densidade do vinho em:
+ * Aguado: Quando for densidade minima;
+ * Bom Corpo: Vinho com corpo nitido, com boa densidade, sem ser encorpado;
+ * Pesado: Vinhos excessivamente denso;
+
 
 ### Item 10
 
