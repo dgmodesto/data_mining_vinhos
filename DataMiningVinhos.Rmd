@@ -129,27 +129,6 @@ Apos a execução do códgio acima, os valores da propriedade Vinho foram transf
 
 ______________________________________________________________________________________________________
 
-### Item 4
-
-Como falamos anteriormente, existem alguns valores discrepantes nesta base de dados, com tudo, precisamos realizar alguma técnica de normalização para estes dados com a necessidade de harmonizar as escalas, então, optamos por utilizar a tecnica de normalização Min-Max.
-
-______________________________________________________________________________________________________
-
-
-No código abaixo ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos, mas para que isso fosse possível, foi necessário mudar nossa variável categorica Vinho para valor um numérico.
-
-
-```{r}
-train_normalizado = (base-min(base))/(max(base)-min(base))
-
-head(train_normalizado)
-```
-
-Depois de aplicar o comando de normalização min-max é feita a harmonização dos dados, já podemos ver que os dados estão todos na mesma escala, entre Zero e Um. Este processo corresponde na verdade à adaptação de escalas que fazemos ao criar um gráfico de eixos X e Y com duas grandezas muito bem definidas.
-
-
-______________________________________________________________________________________________________
-
 
 ## 1.5 Aplicação de Algoritmos
 ### Item 6
@@ -158,19 +137,19 @@ Iremos analisar a correlação entre as variáveis com o nosso target (quality) 
 
 ```{r}
 #correlação de todas as variáveis, ordenadas de 1 a -1
-cor(train_normalizado$quality,train_normalizado$totalsulfurdioxide)
-cor(train_normalizado$quality,train_normalizado$freesulfurdioxide)
-cor(train_normalizado$quality,train_normalizado$residualsugar)
-cor(train_normalizado$quality,train_normalizado$citricacid)
-cor(train_normalizado$quality,train_normalizado$alcohol)
-cor(train_normalizado$quality,train_normalizado$id_vinho)
-cor(train_normalizado$quality,train_normalizado$pH)
-cor(train_normalizado$quality,train_normalizado$density)
-cor(train_normalizado$quality,train_normalizado$sulphates)
-cor(train_normalizado$quality,train_normalizado$fixedacidity)
-cor(train_normalizado$quality,train_normalizado$chlorides)
-cor(train_normalizado$quality,train_normalizado$volatileacidity)
-cor(train_normalizado$quality,train_normalizado$Vinho)
+cor(train$quality,train$totalsulfurdioxide)
+cor(train$quality,train$freesulfurdioxide)
+cor(train$quality,train$residualsugar)
+cor(train$quality,train$citricacid)
+cor(train$quality,train$alcohol)
+cor(train$quality,train$id_vinho)
+cor(train$quality,train$pH)
+cor(train$quality,train$density)
+cor(train$quality,train$sulphates)
+cor(train$quality,train$fixedacidity)
+cor(train$quality,train$chlorides)
+cor(train$quality,train$volatileacidity)
+cor(train$quality,train$Vinho)
 ```
 
 As variáveis com maior correlação ao nosso target é "Alchool" e "densidade". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
@@ -178,7 +157,7 @@ As variáveis com maior correlação ao nosso target é "Alchool" e "densidade".
 ```{r}
 #matriz de correlações
 
-matcor <- cor(train_normalizado)
+matcor <- cor(base)
 print(matcor, digits = 2)
 
 corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
@@ -223,14 +202,14 @@ Abaixo iremos dividir o dataset em 30% Teste e 70% Treino.
 
 ```{r}
 ## 70% do tamanho da base
-smp_size <- floor(0.7 * nrow(train_normalizado))
+smp_size <- floor(0.7 * nrow(base))
 
 ## coloca o seed para fazer sua partição reproduzível
 set.seed(1)
-train_ind <- sample(seq_len(nrow(train_normalizado)), size = smp_size)
+train_ind <- sample(seq_len(nrow(base)), size = smp_size)
 
-train <- train_normalizado[train_ind, ]
-test <- train_normalizado[-train_ind, ]
+train <- base[train_ind, ]
+test <- base[-train_ind, ]
 ```
 
 ### Item 8
@@ -246,7 +225,7 @@ ________________________________________________________________________________
 O commado attach anexa nosso Dataset ao caminho de pesquisa do R. Isso significa que o dataset é pesquisado por uma variável, portanto os objetos no dataset podem ser acessados simplesmente fornecendo seus nomes.
 
 ```{r}
-attach(train_normalizado)
+attach(train)
 ```
 
 A função utilizada para construir modelos lineares de regressão é a função lm() que tem os seguintes argumentos principais lm(formula, data, weights, subset, na.action).
@@ -266,9 +245,9 @@ summary(modelo1)
 
 A funçao summary executada acima apresenta um resumo do modelo linear com: 
   * Chamada do modelo
-  * Medidas resumo dos resíduos.
+  * Medidas resumo dos resíduos
   * Tabela de coeficientes, desvios padrões e testes T para hipótese nula de parâmetros iguais a zero.
-  * Média dos quadrados do resíduo e os respectivos graus de liberdade; R2 e R2 ajustado da regressão.
+  * Média dos quadrados do resíduo e os respectivos graus de liberdade; R2 e R2 ajustado da regressão;
   * Estatística F para qualidade do ajuste (comparação com o modelo com apenas o intercepto).
 
 ______________________________________________________________________________________________________
@@ -280,7 +259,7 @@ Uma parte importante da modelagem dos dados é a redução dos modelos. A funç�
 anova(modelo1)
 ```
 
-Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.000000006, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
+Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.14, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
 
 
 ______________________________________________________________________________________________________
@@ -313,7 +292,7 @@ backward
 summary(backward)
 ```
 
-Conforme mencionado anterioremente a função remove a propriedade com menor valor de correlação parcial, a função backward removeu a propriedade id_vinho que apresentou o valor de  0.000000006, por ela ter o menor valor de correlação parcial dentro do modelo.
+Conforme mencionado anterioremente a função remove a propriedade com menor valor de correlação parcial, a função backward removeu a propriedade id_vinho que apresentou o valor de  0.030, por ela ter o menor valor de correlação parcial dentro do modelo.
 
 
 ______________________________________________________________________________________________________
@@ -342,11 +321,12 @@ summary(modelo2)
 
 ### Item 9
 
-.
-Abaixo segue código para tabulação cruzada (CroosTable) com testes para independência do fator
+
+Abaixo segue código para tabulação cruzada (CroosTable) com testes Para independência do fator
 
 ```{r}
 #Criando a variável fx_alcohol
+old_train = train
 train$fx_alcohol <- cut(alcohol,breaks=c(0,5,10,15,max(alcohol)))  
 str(train)
 CrossTable(train$fx_alcohol , train$quality, type = "r")
@@ -371,21 +351,22 @@ Devido a isso iremos remover os valores discrepantes do nosso modelo, como segue
 
 ```{r}
 #removendo os outliers
-residual_sugar <- subset(train, select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
+train_without_outlier <- subset(train, select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
                                         chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
                                         sulphates,Vinho, alcohol))
 
-AIQ_residualsugar<-quantile(residual_sugar$alcohol,.75,type=2)-quantile(residual_sugar$alcohol,.25,type=2)
-AIQ_residualsugar
+AIQ_train_without_outlier<-quantile(train_without_outlier$alcohol,.75,type=2)-quantile(train_without_outlier$alcohol,.25,type=2)
+AIQ_train_without_outlier
 
-limsup_residualsugar= quantile(residual_sugar$alcohol,.75,type=4)+1.5*AIQ_residualsugar
-limsup_residualsugar
-liminf_residualsugar= quantile(residual_sugar$alcohol,.25,type=2)-1.5*AIQ_residualsugar
-liminf_residualsugar
+limsup_train_without_outlier= quantile(train_without_outlier$alcohol,.75,type=4)+1.5*AIQ_train_without_outlier
+limsup_train_without_outlier
 
-residual_sugar_1<-subset(residual_sugar, alcohol>5)
+liminf_train_without_outlier= quantile(train_without_outlier$alcohol,.25,type=2)-1.5*AIQ_train_without_outlier
+liminf_train_without_outlier
 
-summary <- summary(residual_sugar_1)
+train_without_outlier_result <-subset(train_without_outlier, alcohol>5)
+
+summary <- summary(train_without_outlier_result)
 show(summary)
 ```
 
@@ -395,9 +376,9 @@ Conforme mencionado anteriormente os vinhos de maior qualidade estão concentrad
 Abaixo iremos mostrar novamente como ficará no crosstable sem os outliers
 ______________________________________________________________________________________________________
 ```{r}
-fx_alcohol2 <- cut(residual_sugar_1$alcohol,breaks=c(0,5,10,15,max(residual_sugar_1$alcohol)))  
+fx_alcohol2 <- cut(train_without_outlier_result$alcohol,breaks=c(0,5,10,15,max(train_without_outlier_result$alcohol)))  
 str(train)
-CrossTable(fx_alcohol2 , residual_sugar_1$quality, type = "r")
+CrossTable(fx_alcohol2 , train_without_outlier_result$quality, type = "r")
 ```
 
 #ARVORE DE DECISÃO
@@ -406,20 +387,24 @@ CrossTable(fx_alcohol2 , residual_sugar_1$quality, type = "r")
 
 
 ```{r}
-
+par (mfrow=c(1,2))
 #outra modelo de árvore de decisão com a biblioteca party
 
 # Criando a árvore
 
-arvore.output <- ctree(
+arvore.output.density <- ctree(
   train$quality ~ train$density, 
   data = train)
+plot(arvore.output.density)
 
-#Mostrando a árvore
-plot(arvore.output)
+arvore.output.alcohol <- ctree(
+  train$quality ~ train$alcohol, 
+  data = train)
+plot(arvore.output.alcohol)
+
 ```
 
-Estamos utilizando a variável "density" porque ela tem uma alta correlação com a qualidade do vinho onde define qual é o "Corpo do vinho".
+Estamos utilizando a variável "dentity" porque ela tem uma alta correlação com a qualidade do vinho onde define qual é o "Corpo do vinho", uma densidade extremamente baixo ou alta pode definitivamente deixar o vinho ruim.
 
 Quando falamos em corpo do vinho, nos referimos a sensação de maior ou menor densidade que a bebida apresenta na boca.
 
@@ -443,11 +428,39 @@ summary(reg_logistica)
 table(train$quality, predict(reg_logistica) > 0.5)
 ```
 
+### Item 10.1 antigo item 4
+ps: A normalização fez mais sentido neste ponto por que o comando glm só executa com valores entre 0 e 1
+
+
+Como falamos anteriormente, existem alguns valores discrepantes nesta base de dados, com tudo, precisamos realizar alguma técnica de normalização para estes dados com a necessidade de harmonizar as escalas, então, optamos por utilizar a tecnica de normalização Min-Max.
+
+______________________________________________________________________________________________________
+
+
+No código abaixo ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos, mas para que isso fosse possível, foi necessário mudar nossa variável categorica Vinho para valor um numérico.
+
+
+```{r}
+train_normalizado = (old_train-min(old_train))/(max(old_train)-min(old_train))
+
+head(train_normalizado)
+```
+
+Depois de aplicar o comando de normalização min-max é feita a harmonização dos dados, já podemos ver que os dados estão todos na mesma escala, entre Zero e Um. Este processo corresponde na verdade à adaptação de escalas que fazemos ao criar um gráfico de eixos X e Y com duas grandezas muito bem definidas.
+
+
+______________________________________________________________________________________________________
+
+```{r}
+summary(train_normalizado)
+```
+
+
 ```{r}
 #Aqui outro estudo como os de cima, mas com outra variável, para ver a saída do gráfico
 
 #usei o chlorides porque só podem ser números de 0 a 1 para o Y
-ajuste_glm <- glm(chlorides ~ quality, data = train, family = binomial)
+ajuste_glm <- glm(quality ~ alcohol, data = train_normalizado, family = binomial)
 summary(ajuste_glm)
 ```
 
@@ -455,14 +468,23 @@ summary(ajuste_glm)
 # Ligaçao probit
 #summary(train)
 
-reg_logistica_probit <- glm(chlorides ~ quality, data = train, family = binomial(link = "probit"))
+reg_logistica_probit <- glm(quality ~ alcohol, data = train_normalizado, family = binomial(link = "probit"))
 summary(reg_logistica_probit)
 ```
 
 ```{r}
 #Exibindo o gráfico de curvas ajustasdas
+par (mfrow=c(1,2))
 
-ggplot(train, aes(x=quality, y=chlorides)) + 
+
+ggplot(train_normalizado, aes(x=quality, y=alcohol)) + 
+  geom_point() + 
+  stat_smooth(aes(colour = "Logit"), method="glm", family=binomial, se=FALSE) +
+  stat_smooth(aes(colour = "Probit"), method="glm", family=binomial(link = "probit"), se=FALSE) +
+  stat_smooth(aes(colour = "Complementar Log-Log"), method="glm", family=binomial(link = "cloglog"), se=FALSE) +
+  labs(colour = "Função de ligação")
+
+ggplot(train_normalizado, aes(x=quality, y=density)) + 
   geom_point() + 
   stat_smooth(aes(colour = "Logit"), method="glm", family=binomial, se=FALSE) +
   stat_smooth(aes(colour = "Probit"), method="glm", family=binomial(link = "probit"), se=FALSE) +
@@ -503,7 +525,7 @@ fit <- Val_pred[,1] # valores preditos
 lower <- Val_pred[,2] # limite inferior
 upper <- Val_pred[,3] # limite superior
 
-mse <- mean((train$quality - fit)^2)
+mse <- mean((train_normalizado$quality - fit)^2)
 sqrt(mse)
 ```
 
@@ -511,7 +533,7 @@ sqrt(mse)
 ```{r}
 #simulação de previsão para o Vinho
 
-train_Final<-cbind(train,Val_pred)
+train_Final<-cbind(train_normalizado,Val_pred)
 
 fix(train_Final)
 ```
