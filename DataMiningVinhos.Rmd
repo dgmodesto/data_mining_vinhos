@@ -45,7 +45,7 @@ library('party')
 
 ## 1.2. Carregando a base de dados
 
-Base de dados de Vinhos para ser carregado em memória. Será dividida em *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição:
+Base de dados de Vinhos para ser carregado em memória.Será dividida em *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição:
 ```{r }
 base = read.csv2("data/base.csv")
 ```
@@ -74,7 +74,8 @@ Na tabela apresentada acima conseguimos visualizar algumas informações interes
 ______________________________________________________________________________________________________
 
 
-Agora que conhecemos nossos valores iremos identificar os tipos de dados das propriedades do dataset:
+Agora que conhecemos nossos valores iremos identificar os tipos de dados das propriedades do dataset.
+
 ```{r}
 class(base$id_vinho)
 class(base$fixedacidity)
@@ -100,7 +101,7 @@ ________________________________________________________________________________
 
 
 ### Item 3
-Neste momento verificaremos se há valores nulos na base para um possível tratamento, caso haja valores nulos em alguma propriedade nesta base, poderíamos, por exemplo, utilizar o valor da média ou mediana para substitiuir esses valores nulo e assim manter a base completa.
+Neste momento verificaremos se há valores nulos na base para um possível tratamento, caso haja valores nulos em alguma propriedade nesta base, poderíamos, por exemplo, utilizar o valor da média ou mediana para substitiuir esses valores nulos e assim manter a base completa.
 ```{r}
 sum(is.na(base))
 ```
@@ -122,13 +123,21 @@ base$Vinho = as.numeric(base$Vinho)
 head(base)
 ```
 
+Apos a execução do códgio acima, os valores da propriedade Vinho foram transformadas em valores números que segue:
+ * 1 - RED
+ * 2 - WHITE
+
+______________________________________________________________________________________________________
+
 ### Item 4
+
 Como falamos anteriormente, existem alguns valores discrepantes nesta base de dados, com tudo, precisamos realizar alguma técnica de normalização para estes dados com a necessidade de harmonizar as escalas, então, optamos por utilizar a tecnica de normalização Min-Max.
 
 ______________________________________________________________________________________________________
 
 
-No código abaixo ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos, mas antes disso foi necessário alterar nossa variável categorica Vinho em valor numérico.
+No código abaixo ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos, mas para que isso fosse possível, foi necessário mudar nossa variável categorica Vinho para valor um numérico.
+
 
 ```{r}
 train_normalizado = (base-min(base))/(max(base)-min(base))
@@ -145,22 +154,23 @@ ________________________________________________________________________________
 ## 1.5 Aplicação de Algoritmos
 ### Item 6
 
-Analisar a correlação entre as variáveis com o nosso target (quality) para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas:
+Iremos analisar a correlação entre as variáveis com o nosso target (quality) para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas.
+
 ```{r}
 #correlação de todas as variáveis, ordenadas de 1 a -1
-cor(base$quality,base$totalsulfurdioxide)
-cor(base$quality,base$freesulfurdioxide)
-cor(base$quality,base$residualsugar)
-cor(base$quality,base$citricacid)
-cor(base$quality,base$alcohol)
-cor(base$quality,base$id_vinho)
-cor(base$quality,base$pH)
-cor(base$quality,base$density)
-cor(base$quality,base$sulphates)
-cor(base$quality,base$fixedacidity)
-cor(base$quality,base$chlorides)
-cor(base$quality,base$volatileacidity)
-cor(base$quality,base$Vinho)
+cor(train_normalizado$quality,train_normalizado$totalsulfurdioxide)
+cor(train_normalizado$quality,train_normalizado$freesulfurdioxide)
+cor(train_normalizado$quality,train_normalizado$residualsugar)
+cor(train_normalizado$quality,train_normalizado$citricacid)
+cor(train_normalizado$quality,train_normalizado$alcohol)
+cor(train_normalizado$quality,train_normalizado$id_vinho)
+cor(train_normalizado$quality,train_normalizado$pH)
+cor(train_normalizado$quality,train_normalizado$density)
+cor(train_normalizado$quality,train_normalizado$sulphates)
+cor(train_normalizado$quality,train_normalizado$fixedacidity)
+cor(train_normalizado$quality,train_normalizado$chlorides)
+cor(train_normalizado$quality,train_normalizado$volatileacidity)
+cor(train_normalizado$quality,train_normalizado$Vinho)
 ```
 
 As variáveis com maior correlação ao nosso target é "Alchool" e "densidade". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
@@ -168,7 +178,7 @@ As variáveis com maior correlação ao nosso target é "Alchool" e "densidade".
 ```{r}
 #matriz de correlações
 
-matcor <- cor(base)
+matcor <- cor(train_normalizado)
 print(matcor, digits = 2)
 
 corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
@@ -213,14 +223,14 @@ Abaixo iremos dividir o dataset em 30% Teste e 70% Treino.
 
 ```{r}
 ## 70% do tamanho da base
-smp_size <- floor(0.7 * nrow(base))
+smp_size <- floor(0.7 * nrow(train_normalizado))
 
 ## coloca o seed para fazer sua partição reproduzível
 set.seed(1)
-train_ind <- sample(seq_len(nrow(base)), size = smp_size)
+train_ind <- sample(seq_len(nrow(train_normalizado)), size = smp_size)
 
-train <- base[train_ind, ]
-test <- base[-train_ind, ]
+train <- train_normalizado[train_ind, ]
+test <- train_normalizado[-train_ind, ]
 ```
 
 ### Item 8
@@ -236,7 +246,7 @@ ________________________________________________________________________________
 O commado attach anexa nosso Dataset ao caminho de pesquisa do R. Isso significa que o dataset é pesquisado por uma variável, portanto os objetos no dataset podem ser acessados simplesmente fornecendo seus nomes.
 
 ```{r}
-attach(train)
+attach(train_normalizado)
 ```
 
 A função utilizada para construir modelos lineares de regressão é a função lm() que tem os seguintes argumentos principais lm(formula, data, weights, subset, na.action).
@@ -256,9 +266,9 @@ summary(modelo1)
 
 A funçao summary executada acima apresenta um resumo do modelo linear com: 
   * Chamada do modelo
-  * Medidas resumo dos resíduos
+  * Medidas resumo dos resíduos.
   * Tabela de coeficientes, desvios padrões e testes T para hipótese nula de parâmetros iguais a zero.
-  * Média dos quadrados do resíduo e os respectivos graus de liberdade; R2 e R2 ajustado da regressão;
+  * Média dos quadrados do resíduo e os respectivos graus de liberdade; R2 e R2 ajustado da regressão.
   * Estatística F para qualidade do ajuste (comparação com o modelo com apenas o intercepto).
 
 ______________________________________________________________________________________________________
@@ -270,7 +280,7 @@ Uma parte importante da modelagem dos dados é a redução dos modelos. A funç�
 anova(modelo1)
 ```
 
-Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.14, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
+Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.000000006, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
 
 
 ______________________________________________________________________________________________________
@@ -303,7 +313,7 @@ backward
 summary(backward)
 ```
 
-Conforme mencionado anterioremente a função remove a propriedade com menor valor de correlação parcial, a função backward removeu a propriedade id_vinho que apresentou o valor de  0.030, por ela ter o menor valor de correlação parcial dentro do modelo.
+Conforme mencionado anterioremente a função remove a propriedade com menor valor de correlação parcial, a função backward removeu a propriedade id_vinho que apresentou o valor de  0.000000006, por ela ter o menor valor de correlação parcial dentro do modelo.
 
 
 ______________________________________________________________________________________________________
