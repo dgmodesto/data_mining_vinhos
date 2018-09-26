@@ -342,6 +342,9 @@ summary(modelo2)
 
 ### Item 9
 
+.
+Abaixo segue código para tabulação cruzada (CroosTable) com testes para independência do fator
+
 ```{r}
 #Criando a variável fx_alcohol
 train$fx_alcohol <- cut(alcohol,breaks=c(0,5,10,15,max(alcohol)))  
