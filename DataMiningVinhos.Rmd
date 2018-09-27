@@ -4,7 +4,7 @@ output: html_document
 --- 
 # 1. Introdução
 
-Nos últimos anos o setor vinícola e os setores de tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de análises exploratórias dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinícola com técnicas específicas de data mining e verificar até que ponto esta interligação pode melhorar a tomada de decisão.
+Nos últimos anos o setor vinícola e os setores de tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de análises exploratórias dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinícola com técnizzzzcas específicas de data mining e verificar até que ponto esta interligação pode melhorar a tomada de decisão.
 
 
 ## 1.1. Instalando e carregando as bibliotecas
@@ -161,6 +161,27 @@ matcor <- cor(base)
 print(matcor, digits = 2)
 
 corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
+```
+
+```{r}
+panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
+    ...)  {
+    usr <- par("usr")
+    on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- cor(x, y , use = "pairwise.complete.obs")
+    txt <- format(c(r, 0.123456789), digits = digits) [1]
+    txt <- paste(prefix, txt, sep = "")
+    if (missing(cex.cor))
+        cex <- 0.8/strwidth(txt)
+# abs(r) é para que na saída as correlações ficam proporcionais
+    text(0.5, 0.5, txt, cex = cex * abs(r))
+}
+```
+
+```{r}
+#pdf(file = "grafico.pdf")
+pairs(base, lower.panel=panel.smooth, upper.panel=panel.cor)
 ```
 
 ```{r}
