@@ -77,20 +77,20 @@ ________________________________________________________________________________
 Agora que conhecemos nossos valores iremos identificar os tipos de dados das propriedades do dataset.
 
 ```{r}
-class(base$id_vinho)
-class(base$fixedacidity)
-class(base$volatileacidity)
-class(base$citricacid)
-class(base$residualsugar)
-class(base$chlorides)
-class(base$freesulfurdioxide)
-class(base$totalsulfurdioxide)
-class(base$density)
-class(base$pH)
-class(base$sulphates)
-class(base$alcohol)
-class(base$quality)
-class(base$Vinho)
+classes <- c(class(base$id_vinho),class(base$fixedacidity),class(base$volatileacidity)
+,class(base$citricacid)
+,class(base$residualsugar)
+,class(base$chlorides)
+,class(base$freesulfurdioxide)
+,class(base$totalsulfurdioxide)
+,class(base$density)
+,class(base$pH)
+,class(base$sulphates)
+,class(base$alcohol)
+,class(base$quality)
+,class(base$Vinho))
+
+classes
 ```
 
 Com exceção da propriedade Vinho, todas as outras propriedades são númericas (inteiros e reais).
@@ -137,22 +137,22 @@ Iremos analisar a correlação entre as variáveis com o nosso target (quality) 
 
 ```{r}
 #correlação de todas as variáveis, ordenadas de 1 a -1
-cor(train$quality,train$totalsulfurdioxide)
-cor(train$quality,train$freesulfurdioxide)
-cor(train$quality,train$residualsugar)
-cor(train$quality,train$citricacid)
-cor(train$quality,train$alcohol)
-cor(train$quality,train$id_vinho)
-cor(train$quality,train$pH)
-cor(train$quality,train$density)
-cor(train$quality,train$sulphates)
-cor(train$quality,train$fixedacidity)
-cor(train$quality,train$chlorides)
-cor(train$quality,train$volatileacidity)
-cor(train$quality,train$Vinho)
+cor(base$quality,base$totalsulfurdioxide)
+cor(base$quality,base$freesulfurdioxide)
+cor(base$quality,base$residualsugar)
+cor(base$quality,base$citricacid)
+cor(base$quality,base$alcohol)
+cor(base$quality,base$id_vinho)
+cor(base$quality,base$pH)
+cor(base$quality,base$density)
+cor(base$quality,base$sulphates)
+cor(base$quality,base$fixedacidity)
+cor(base$quality,base$chlorides)
+cor(base$quality,base$volatileacidity)
+cor(base$quality,base$Vinho)
 ```
 
-As variáveis com maior correlação ao nosso target é "Alchool" e "densidade". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
+As variáveis com maior correlação ao nosso target é "Alcohol" e "density". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
 
 ```{r}
 #matriz de correlações
