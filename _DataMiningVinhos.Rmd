@@ -1,0 +1,563 @@
+---
+title: " Análise Exploratória da Base de Vinhos"
+output: html_document
+--- 
+# 1. Introdução
+
+Nos últimos anos o setor vinícola e os setores de tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de análises exploratórias dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinícola com técnizzzzcas específicas de data mining e verificar até que ponto esta interligação pode melhorar a tomada de decisão.
+
+
+## 1.1. Instalando e carregando as bibliotecas
+
+Remove mensagens de alerta:
+```{r}
+options( warn = -1 )
+```
+
+Instala as bibliotecas utilizadas para execução do código:
+```{r}
+#install.packages('dplyr')
+#install.packages('readr')
+#install.packages('plotly')
+#install.packages("corrgram")
+#install.packages('ggplot2')
+#install.packages('gmodels')
+#install.packages('psych')
+#install.packages("corrplot")
+#install.packages('tree')
+#install.packages('party')
+```
+
+Carrega as bibliotecas utilizadas para execução do código:
+```{r}
+library('dplyr')
+library('readr')
+library('plotly')
+library('ggplot2')
+library('gmodels')
+library('psych')
+library('corrgram')
+library('corrplot')
+library('tree')
+library('party')
+```
+
+
+## 1.2. Carregando a base de dados
+
+Base de dados de Vinhos para ser carregado em memória.Será dividida em *train* utilizado para treino e *test* para testes na nossa análise e modelo de predição:
+```{r }
+base = read.csv2("data/base.csv")
+```
+
+Mostra até duas casas decimais:
+```{r}
+options("scipen" = 2)
+```
+
+## 1.3. Estrutura de Dados
+### Item 1
+
+Visualizando a estrutura geral do conjuntos de dados, usando o comando summary:
+```{r}
+summary(base)
+```
+
+### Item 2
+O comando abaixo nos ajuda a conhecer quais são as propriedades do dataset e seus respectivos valores.
+```{r}
+describe(base)
+```
+
+Na tabela apresentada acima conseguimos visualizar algumas informações interessantes. Por exemplo, podemos verificar a média, mediana, valores mínimos, valores máximos entre outras informações de cada propriedade do nosso dataset. 
+
+______________________________________________________________________________________________________
+
+
+Agora que conhecemos nossos valores iremos identificar os tipos de dados das propriedades do dataset.
+
+```{r}
+classes <- c(class(base$id_vinho),class(base$fixedacidity),class(base$volatileacidity)
+,class(base$citricacid)
+,class(base$residualsugar)
+,class(base$chlorides)
+,class(base$freesulfurdioxide)
+,class(base$totalsulfurdioxide)
+,class(base$density)
+,class(base$pH)
+,class(base$sulphates)
+,class(base$alcohol)
+,class(base$quality)
+,class(base$Vinho))
+
+classes
+```
+
+Com exceção da propriedade Vinho, todas as outras propriedades são númericas (inteiros e reais).
+
+
+______________________________________________________________________________________________________
+
+
+
+### Item 3
+Neste momento verificaremos se há valores nulos na base para um possível tratamento, caso haja valores nulos em alguma propriedade nesta base, poderíamos, por exemplo, utilizar o valor da média ou mediana para substitiuir esses valores nulos e assim manter a base completa.
+```{r}
+sum(is.na(base))
+```
+
+O código acima é responsável por buscar valores nulos na base, mostrou que não há valores nulos ou vazios nesta base, com isso, não será necessário realizar nenhum tratramento na base.
+
+
+______________________________________________________________________________________________________
+
+
+## 1.4. Normalização de Dados
+
+### Item 5
+Possuímos uma variável categórica, da qual transformaremos em numérica para melhor trabalharmos em cima de nossos algoritmos. A variável é VINHO, que possui os valores "RED" e "WHITE":
+```{r}
+#transformando o campo Vinho
+base$Vinho = as.numeric(base$Vinho)
+
+head(base)
+```
+
+Apos a execução do códgio acima, os valores da propriedade Vinho foram transformadas em valores números que segue:
+ * 1 - RED
+ * 2 - WHITE
+
+______________________________________________________________________________________________________
+
+
+## 1.5 Aplicação de Algoritmos
+### Item 6
+
+Iremos analisar a correlação entre as variáveis com o nosso target (quality) para identificar as variáveis com maior importância, caso necessário, fazer iterações entre elas.
+
+```{r}
+#correlação de todas as variáveis, ordenadas de 1 a -1
+cor(base$quality,base$totalsulfurdioxide)
+cor(base$quality,base$freesulfurdioxide)
+cor(base$quality,base$residualsugar)
+cor(base$quality,base$citricacid)
+cor(base$quality,base$alcohol)
+cor(base$quality,base$id_vinho)
+cor(base$quality,base$pH)
+cor(base$quality,base$density)
+cor(base$quality,base$sulphates)
+cor(base$quality,base$fixedacidity)
+cor(base$quality,base$chlorides)
+cor(base$quality,base$volatileacidity)
+cor(base$quality,base$Vinho)
+```
+
+As variáveis com maior correlação ao nosso target é "Alcohol" e "density". A primeira é a com maior correlação positiva e a segunda é a com maior correlação negativa.
+
+```{r}
+#matriz de correlações
+
+matcor <- cor(base)
+print(matcor, digits = 2)
+
+corrgram(matcor, type = "cor", lower.panel = panel.shade, upper.panel = panel.pie)
+```
+
+```{r}
+panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
+    ...)  {
+    usr <- par("usr")
+    on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    r <- cor(x, y , use = "pairwise.complete.obs")
+    txt <- format(c(r, 0.123456789), digits = digits) [1]
+    txt <- paste(prefix, txt, sep = "")
+    if (missing(cex.cor))
+        cex <- 0.8/strwidth(txt)
+# abs(r) é para que na saída as correlações ficam proporcionais
+    text(0.5, 0.5, txt, cex = cex * abs(r))
+}
+```
+
+```{r}
+#pdf(file = "grafico.pdf")
+pairs(base, lower.panel=panel.smooth, upper.panel=panel.cor)
+```
+
+```{r}
+#Função para que as correlações fiquem proporcionais na saída
+panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
+                      ...)  {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- cor(x, y , use = "pairwise.complete.obs")
+  txt <- format(c(r, 0.123456789), digits = digits) [1]
+  txt <- paste(prefix, txt, sep = "")
+  if (missing(cex.cor))
+    cex <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex * abs(r))
+}
+```
+
+```{r}
+#plotando o gráfico de correlações
+corrplot::corrplot(matcor, method="circle", order="hclust")
+```
+
+
+Diferente do gráfico de correlação corrgram, o gráfico acima feito com o corrplot, tem a vantagem de expor as correlações de uma forma mais orgranizada, facilitando um pouco mais a visualização das correlações entre as propriedades do nosso dataset.
+
+______________________________________________________________________________________________________
+
+
+### Item 7
+
+Iremos dividir nosso Dataset em duas partes que nomearemos como base de treino "train" e teste "test". Será dividido da seguinte forma: 30% será reservado para a base de teste e os outros 70% para a base de treino. O ideal é podermos treinar nossos algoritmos com nossa base de treino e depois de chegar a um resultado que seja satisfatório realizar testes com os 30% separados para a base de teste.
+
+
+______________________________________________________________________________________________________
+
+
+Abaixo iremos dividir o dataset em 30% Teste e 70% Treino.
+
+```{r}
+## 70% do tamanho da base
+smp_size <- floor(0.7 * nrow(base))
+
+## coloca o seed para fazer sua partição reproduzível
+set.seed(1)
+train_ind <- sample(seq_len(nrow(base)), size = smp_size)
+
+train <- base[train_ind, ]
+test <- base[-train_ind, ]
+```
+
+### Item 8
+
+Utilizaremos o método stepwise para realzar a seleção de variáveis. Este método é muito utilizado para a técnica de regressão linear.
+
+Procedimentos para seleção ou exclusão de variáveis de um modelo é baseado em um algoritmo que checa a importância das variáveis incluindo ou excluindo-as do modelo se baseando em uma regra de decisão.
+
+
+______________________________________________________________________________________________________
+
+
+O commado attach anexa nosso Dataset ao caminho de pesquisa do R. Isso significa que o dataset é pesquisado por uma variável, portanto os objetos no dataset podem ser acessados simplesmente fornecendo seus nomes.
+
+```{r}
+attach(train)
+```
+
+A função utilizada para construir modelos lineares de regressão é a função lm() que tem os seguintes argumentos principais lm(formula, data, weights, subset, na.action).
+
+______________________________________________________________________________________________________
+
+
+Digamos que Quality seja nosso Y e os outros atributos sejam nosso X. Então podemos ler os argumentos abaixo da seguinte forma:
+ * Y ~ X1 + X2 +  ... + Xn : Indica -> Modele Y como função estatística das variáveis X1 + X2 +  ... + Xn - 
+ * Isto é efeito aditivo dos modelos lineares.
+
+#abaixo segue modelo com todas os atributos do dataset
+```{r}
+modelo1 <- lm(quality ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+alcohol+id_vinho+pH+density+sulphates+fixedacidity+chlorides+volatileacidity+Vinho)
+summary(modelo1)
+```
+
+A funçao summary executada acima apresenta um resumo do modelo linear com: 
+  * Chamada do modelo
+  * Medidas resumo dos resíduos
+  * Tabela de coeficientes, desvios padrões e testes T para hipótese nula de parâmetros iguais a zero.
+  * Média dos quadrados do resíduo e os respectivos graus de liberdade; R2 e R2 ajustado da regressão;
+  * Estatística F para qualidade do ajuste (comparação com o modelo com apenas o intercepto).
+
+______________________________________________________________________________________________________
+
+
+Uma parte importante da modelagem dos dados é a redução dos modelos. A função "anova()" compara dois ou mais modelos encaixados por meio da estatística F (por padrão), especialmente indicadas para modelos lineares normais. Esta função "anova()" apresenta a tabela de análise de variância, tendo as variáveis preditoras como fatores.
+
+```{r}
+anova(modelo1)
+```
+
+Analise o resultado do método anova() podemos observar que a variável id_vinho tem o menor indice de variância com seu valor 0.14, o que a faz com ela seja a variável mais próximo do zero dentro deste modelo. Mais a frente iremos utilizar algumas técnicas pra certificarmos da importância de todas as varipaveis para o nosso modelo.
+
+
+______________________________________________________________________________________________________
+
+
+
+A seleção forward parte da suposição de que não há variável no modelo, apenas o intercepto. A ideia do método é adicionar uma variável de cada vez. A primeira variável selecionada é aquela com maior correlação com a resposta.
+
+```{r}
+
+forward<-step(modelo1,direction="forward")
+forward
+summary(forward)
+```
+
+Para determinar a entrada das variáveis no modelo o teste F é comparado com critério de estabilização e as outras variáveis são determinadas pelo valor do coeficiente de correlação parcial.
+
+Devido aos bons resultados obtidos no método utilizado acima, a função incluiu todas as variáveis do modelo.
+
+
+______________________________________________________________________________________________________
+
+
+
+Diferente da função forward, a função backward começa com todas as variáveis no modelo e elimina  a variável que apresentar ser maior para o critério. A variável com menor valor de correlação parcial é escolhida para sair do modelo.
+```{r}
+#excluiu a variável id_vinho
+backward<-step(modelo1,direction="backward")
+backward
+summary(backward)
+```
+
+Conforme mencionado anterioremente a função remove a propriedade com menor valor de correlação parcial, a função backward removeu a propriedade id_vinho que apresentou o valor de  0.030, por ela ter o menor valor de correlação parcial dentro do modelo.
+
+
+______________________________________________________________________________________________________
+
+
+
+Quando informado a direction "both", a função step irá aplicar tanto o forward quanto o backward no modelo, como segue abaixo.
+```{r}
+stepwise<-step(modelo1,direction="both")
+stepwise
+summary(stepwise)
+```
+
+Podemos observar que a propriedade id_vinho não esta mais neste modelo, o que confirma a afirmação feita que both aplica os dois métodos mencionados. forward manteve todas as variáveis no modelo e backward removeu a proporiedade id_vinho por que ela tinha o menor valor de correlação parcial dentro do modelo.
+
+______________________________________________________________________________________________________
+
+
+Abaixo a criação do nosso novo modelo sem a variável id_vinho.
+
+```{r}
+#modelo sem a variável id_vinho
+modelo2 <- lm(quality ~ totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity+Vinho)
+summary(modelo2)
+```
+
+### Item 9
+
+
+Abaixo segue código para tabulação cruzada (CroosTable) com testes Para independência do fator
+
+```{r}
+#Criando a variável fx_alcohol
+old_train = train
+train$fx_alcohol <- cut(alcohol,breaks=c(0,5,10,15,max(alcohol)))  
+str(train)
+CrossTable(train$fx_alcohol , train$quality, type = "r")
+```
+
+A função crosstable tem diversos tipos de saida, que segue relacionado abaixo:
+  * f requência - contagem de frequência
+  * r  - proporção dentro da linha
+  * c  - proporção dentro da coluna
+  * j  - proporção dentro das 2 dimensões finais da tabela
+  * t  - proporção de toda a tabela
+
+Utilizamos o tipo "r" para visualizar a proporção de qualidade por cada grupo de alchool criado no codigo acima. Apos análise do resultado acima, conseguimos observar que no grupo de alcool entre 10 e 15, é onde se encontra a maior proporção de vinhos de qualidade. Isso mostra que a qualidade do vinho é diretamente relacionada com seu teor alcoolico.
+
+
+______________________________________________________________________________________________________
+
+
+Os Outliers são dados que não se enquadram na normalidade e que talvez possa causar anomalias nos resultados obtidos por meio de algoritmos. Os outliers podem viesar negativamente todo o resultado de uma análise.
+
+Devido a isso iremos remover os valores discrepantes do nosso modelo, como segue o codigo abaixo.
+
+```{r}
+#removendo os outliers
+train_without_outlier <- subset(train, select=c(quality,fixedacidity,volatileacidity,citricacid,residualsugar,
+                                        chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,
+                                        sulphates,Vinho, alcohol))
+
+AIQ_train_without_outlier<-quantile(train_without_outlier$alcohol,.75,type=2)-quantile(train_without_outlier$alcohol,.25,type=2)
+AIQ_train_without_outlier
+
+limsup_train_without_outlier= quantile(train_without_outlier$alcohol,.75,type=4)+1.5*AIQ_train_without_outlier
+limsup_train_without_outlier
+
+liminf_train_without_outlier= quantile(train_without_outlier$alcohol,.25,type=2)-1.5*AIQ_train_without_outlier
+liminf_train_without_outlier
+
+train_without_outlier_result <-subset(train_without_outlier, alcohol>5)
+
+summary <- summary(train_without_outlier_result)
+show(summary)
+```
+
+
+Conforme mencionado anteriormente os vinhos de maior qualidade estão concentrados onde o alcool tem seu valor de 5 até 15. Focando nesses fatos, aplicamos o algoritmo para remover os outliers onde o valor de alcool fosse menor que 5, pois nesse range o alcool não tem impacto expressivo na qualidade do Vinho.
+
+Abaixo iremos mostrar novamente como ficará no crosstable sem os outliers
+______________________________________________________________________________________________________
+```{r}
+fx_alcohol2 <- cut(train_without_outlier_result$alcohol,breaks=c(0,5,10,15,max(train_without_outlier_result$alcohol)))  
+str(train)
+CrossTable(fx_alcohol2 , train_without_outlier_result$quality, type = "r")
+```
+
+#ARVORE DE DECISÃO
+
+Árvore de decisão é um modelo gráfico que pode ser desenhado geralmente em forma de fluxogramas ou diagramas. Essa representação auxilia a explorar todas as alternativas de uma determinada decisão e seus possíveis resultados.
+
+
+```{r}
+par (mfrow=c(1,2))
+#outra modelo de árvore de decisão com a biblioteca party
+
+# Criando a árvore
+
+arvore.output.density <- ctree(
+  train$quality ~ train$density, 
+  data = train)
+plot(arvore.output.density)
+
+arvore.output.alcohol <- ctree(
+  train$quality ~ train$alcohol, 
+  data = train)
+plot(arvore.output.alcohol)
+
+```
+
+Estamos utilizando a variável "dentity" porque ela tem uma alta correlação com a qualidade do vinho onde define qual é o "Corpo do vinho", uma densidade extremamente baixo ou alta pode definitivamente deixar o vinho ruim.
+
+Quando falamos em corpo do vinho, nos referimos a sensação de maior ou menor densidade que a bebida apresenta na boca.
+
+Podemos classificar a densidade do vinho em:
+ * Aguado: Quando for densidade minima;
+ * Bom Corpo: Vinho com corpo nitido, com boa densidade, sem ser encorpado;
+ * Pesado: Vinhos excessivamente denso;
+
+
+### Item 10
+
+```{r}
+#modelo de regressão logística
+
+reg_logistica <- glm(quality ~ density, data = train)
+
+summary(reg_logistica)
+```
+
+```{r}
+table(train$quality, predict(reg_logistica) > 0.5)
+```
+
+### Item 10.1 antigo item 4
+ps: A normalização fez mais sentido neste ponto por que o comando glm só executa com valores entre 0 e 1
+
+
+Como falamos anteriormente, existem alguns valores discrepantes nesta base de dados, com tudo, precisamos realizar alguma técnica de normalização para estes dados com a necessidade de harmonizar as escalas, então, optamos por utilizar a tecnica de normalização Min-Max.
+
+______________________________________________________________________________________________________
+
+
+No código abaixo ocorre a normalização dos dados numéricos para melhor trabalharmos com um range apropriado de valores em nossos algoritmos, mas para que isso fosse possível, foi necessário mudar nossa variável categorica Vinho para valor um numérico.
+
+
+```{r}
+train_normalizado = (old_train-min(old_train))/(max(old_train)-min(old_train))
+
+head(train_normalizado)
+```
+
+Depois de aplicar o comando de normalização min-max é feita a harmonização dos dados, já podemos ver que os dados estão todos na mesma escala, entre Zero e Um. Este processo corresponde na verdade à adaptação de escalas que fazemos ao criar um gráfico de eixos X e Y com duas grandezas muito bem definidas.
+
+
+______________________________________________________________________________________________________
+
+```{r}
+summary(train_normalizado)
+```
+
+
+```{r}
+#Aqui outro estudo como os de cima, mas com outra variável, para ver a saída do gráfico
+
+#usei o chlorides porque só podem ser números de 0 a 1 para o Y
+ajuste_glm <- glm(quality ~ alcohol, data = train_normalizado, family = binomial)
+summary(ajuste_glm)
+```
+
+```{r}
+# Ligaçao probit
+#summary(train)
+
+reg_logistica_probit <- glm(quality ~ alcohol, data = train_normalizado, family = binomial(link = "probit"))
+summary(reg_logistica_probit)
+```
+
+```{r}
+#Exibindo o gráfico de curvas ajustasdas
+par (mfrow=c(1,2))
+
+
+ggplot(train_normalizado, aes(x=quality, y=alcohol)) + 
+  geom_point() + 
+  stat_smooth(aes(colour = "Logit"), method="glm", family=binomial, se=FALSE) +
+  stat_smooth(aes(colour = "Probit"), method="glm", family=binomial(link = "probit"), se=FALSE) +
+  stat_smooth(aes(colour = "Complementar Log-Log"), method="glm", family=binomial(link = "cloglog"), se=FALSE) +
+  labs(colour = "Função de ligação")
+
+ggplot(train_normalizado, aes(x=quality, y=density)) + 
+  geom_point() + 
+  stat_smooth(aes(colour = "Logit"), method="glm", family=binomial, se=FALSE) +
+  stat_smooth(aes(colour = "Probit"), method="glm", family=binomial(link = "probit"), se=FALSE) +
+  stat_smooth(aes(colour = "Complementar Log-Log"), method="glm", family=binomial(link = "cloglog"), se=FALSE) +
+  labs(colour = "Função de ligação")
+
+```
+
+```{r}
+#aqui estou usando o teste chi quadrado, que é o mais indicado para regressão logística
+
+anova(ajuste_glm, test="Chisq")
+```
+
+### Item 11
+
+```{r}
+#Análise de resíduos
+modelo_residuo <- lm(quality ~ citricacid+fixedacidity+volatileacidity+citricacid+residualsugar+chlorides+freesulfurdioxide+totalsulfurdioxide+density+pH+sulphates+alcohol)
+
+grafico_residuo <- resid(modelo_residuo)
+plot(predict(modelo_residuo), grafico_residuo, xlab = "Preditor linear",ylab = "Resíduos")
+abline(h = 0, lty = 2)
+```
+
+### Item 12
+
+```{r}
+#avaliação de acurácia e verificação de taxas de erro
+
+modelo_acuracia <- lm(quality ~ citricacid+fixedacidity+volatileacidity+citricacid+residualsugar+chlorides+freesulfurdioxide+totalsulfurdioxide+density+pH+sulphates+alcohol)
+
+#criando o intervalo de confiança com os valores preditos
+Val_pred <- predict(modelo_acuracia,interval = "prediction", level = 0.95) 
+fix(Val_pred)
+
+fit <- Val_pred[,1] # valores preditos
+lower <- Val_pred[,2] # limite inferior
+upper <- Val_pred[,3] # limite superior
+
+mse <- mean((train_normalizado$quality - fit)^2)
+sqrt(mse)
+```
+
+### Item 13
+```{r}
+#simulação de previsão para o Vinho
+
+train_Final<-cbind(train_normalizado,Val_pred)
+
+fix(train_Final)
+```
+
+### Item 14
+## Considerações Finais
