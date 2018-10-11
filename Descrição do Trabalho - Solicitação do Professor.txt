@@ -1,0 +1,45 @@
+Utilizando a base de vinhos (documento anexo) e disponibilizada em aula o objetivo do trabalho é mensurar a variável “Quality” dos vinhos desta região de Portugal com as variáveis de características (composição) dos vinhos.
+Algumas etapas importantes:
+
+1.	Base
+Reconhecimento da Base: 
+ - Um descrito do tamanho da base, 
+ - quantidade de variáveis, 
+ - formatos, 
+ - e alguns descritivos (“achados”) sobre a base/variáveis.
+
+Análise exploratória de dados: 
+ - Detecção de outliers, 
+ - gráficos e análise sobre os dois tipos de vinhos. 
+ - Correlações entre elas (numéricas e gráficos).
+
+
+Avaliar se a análise será feita com os dois tipos de vinhos juntos ou se separaria por tipo para analisá-los. 
+
+No fechamento desta etapa colocar 
+ - qual a opção seguirá sobre os tipos de vinhos , 
+ - sobre os outliers (caso tenha) 
+ - e o uso de Componentes Principais
+
+2.	 Algoritmos para explicar a variável “Quality” 
+o	Modelo1: Regressão Linear
+o	Modelo 2:  Árvore de Regressão
+o	Modelo 3:  Árvore de Decisão 
+o	Modelo 4:  Regressão Logística 
+
+o	Para cada modelo fazer as análises adequadas como: 
+?	explicar a técnica
+?	qual a variável dependente, 
+?	quais são as variáveis independentes,
+?	relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+?	saída do modelo (análise)
+?	qualidade do modelo
+?	O que cada modelo gerou de resultados?
+
+
+3.	Comparação entre os modelos:
+Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês recomendariam
+
+4.	Nesta atividade usamos somente algumas técnicas supervisionadas, 
+a)	quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?  
+b)	 e, das técnicas Não Supervisionadas, quais?
