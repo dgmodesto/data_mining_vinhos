@@ -3,43 +3,45 @@ Algumas etapas importantes:
 
 1.	Base
 Reconhecimento da Base: 
- - Um descrito do tamanho da base, 
- - quantidade de variáveis, 
- - formatos, 
- - e alguns descritivos (“achados”) sobre a base/variáveis.
+ 1.0- Um descrito do tamanho da base, ok
+ 1.1- quantidade de variáveis,  ok
+ 1.2- formatos,  ok
+ 1.3- e alguns descritivos (“achados”) sobre a base/variáveis. ok
 
 Análise exploratória de dados: 
- - Detecção de outliers, 
- - gráficos e análise sobre os dois tipos de vinhos. 
- - Correlações entre elas (numéricas e gráficos).
+ 1.4- Detecção de outliers, ok
+ 1.5- gráficos e análise sobre os dois tipos de vinhos. ok
+ 1.6- Correlações entre elas (numéricas e gráficos). ok
 
 
 Avaliar se a análise será feita com os dois tipos de vinhos juntos ou se separaria por tipo para analisá-los. 
 
 No fechamento desta etapa colocar 
- - qual a opção seguirá sobre os tipos de vinhos , 
- - sobre os outliers (caso tenha) 
- - e o uso de Componentes Principais
+ 1.7- qual a opção seguirá sobre os tipos de vinhos , ok
+ 1.8- sobre os outliers (caso tenha) ok
+ 1.9- e o uso de Componentes Principais - ok
+
+
 
 2.	 Algoritmos para explicar a variável “Quality” 
-o	Modelo1: Regressão Linear
-o	Modelo 2:  Árvore de Regressão
-o	Modelo 3:  Árvore de Decisão 
-o	Modelo 4:  Regressão Logística 
+2.1	Modelo1: Regressão Linear -ok
+2.2	Modelo 2:  Árvore de Regressão
+2.3	Modelo 3:  Árvore de Decisão - ok
+2.4	Modelo 4:  Regressão Logística - ok +-
 
-o	Para cada modelo fazer as análises adequadas como: 
-?	explicar a técnica
-?	qual a variável dependente, 
-?	quais são as variáveis independentes,
-?	relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-?	saída do modelo (análise)
-?	qualidade do modelo
-?	O que cada modelo gerou de resultados?
+	Para cada modelo fazer as análises adequadas como: 
+2.5	explicar a técnica
+2.6	qual a variável dependente, 
+2.7	quais são as variáveis independentes,
+2.8	relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
+2.9	saída do modelo (análise)
+2.10	qualidade do modelo
+2.11	O que cada modelo gerou de resultados?
 
 
 3.	Comparação entre os modelos:
-Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês recomendariam
+3.1 	Utilizando as métricas adequadas para comparação de modelos façam um resumo sobre a qualidade dos modelos e indiquem qual o modelo/ técnica que vocês recomendariam
 
 4.	Nesta atividade usamos somente algumas técnicas supervisionadas, 
-a)	quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?  
-b)	 e, das técnicas Não Supervisionadas, quais?
+4.1 a)	quais outras técnicas supervisionadas vocês indicariam como adequadas para esta análise?  
+4.2 b)	 e, das técnicas Não Supervisionadas, quais?
