@@ -25,16 +25,16 @@ No fechamento desta etapa colocar
 
 2.	 Algoritmos para explicar a variável “Quality” 
 2.1	Modelo1: Regressão Linear -ok
-2.2	Modelo 2:  Árvore de Regressão
+2.2	Modelo 2:  Árvore de Regressão - ok
 2.3	Modelo 3:  Árvore de Decisão - ok
-2.4	Modelo 4:  Regressão Logística - ok +-
+2.4	Modelo 4:  Regressão Logística - ok
 
 	Para cada modelo fazer as análises adequadas como: 
-2.5	explicar a técnica
-2.6	qual a variável dependente, 
-2.7	quais são as variáveis independentes,
-2.8	relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1.
-2.9	saída do modelo (análise)
+2.5	explicar a técnica ok\	
+2.6	qual a variável dependente, ok 
+2.7	quais são as variáveis independentes, ok
+2.8	relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1. ok +- (Falta regressão linear)
+2.9	saída do modelo (análise) ok +- (Falta regressão linear)
 2.10	qualidade do modelo
 2.11	O que cada modelo gerou de resultados?
 

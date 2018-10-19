@@ -182,7 +182,7 @@ outliersBase$id_vinho <- NULL
 
 boxplot(outliersBase,col='gray',main='Vinhos Branco',xaxt = 'n',  xlab = '')
 axis(1, labels = FALSE)
-text(x =  seq_along(colnames(outliersBase)), y = par("usr")[3] - 1, srt = 45, adj = 1,labels = colnames(teste), xpd = TRUE)
+text(x =  seq_along(colnames(outliersBase)), y = par("usr")[3] - 1, srt = 45, adj = 1,labels = colnames(outliersBase), xpd = TRUE)
 
 ```
 
@@ -212,7 +212,7 @@ outliersBase$id_vinho <- NULL
 
 boxplot(outliersBase,col='gray',main='Vinhos Branco',xaxt = 'n',  xlab = '')
 axis(1, labels = FALSE)
-text(x =  seq_along(colnames(outliersBase)), y = par("usr")[3] - 1, srt = 45, adj = 1,labels = colnames(teste), xpd = TRUE)
+text(x =  seq_along(colnames(outliersBase)), y = par("usr")[3] - 1, srt = 45, adj = 1,labels = colnames(outliersBase), xpd = TRUE)
 
 ```
 
@@ -272,7 +272,7 @@ As variáveis selecionadas pelo stepwise e que possuem p-value próximo a 0 são
 
 ```{r}
 baseVinhoBrancoAtual = select(baseVinhoBranco, freesulfurdioxide,residualsugar,alcohol,pH,
-              density,sulphates,fixedacidity,chlorides,volatileacidity,Vinho,
+              density,sulphates,fixedacidity,chlorides,volatileacidity,
               quality)
 
 head(baseVinhoBrancoAtual)
@@ -396,66 +396,71 @@ head(test)
 A nossa base de vinhos pode ser classificada tanto como um problema de Classificação quanto de Regressão. Iremos aplicar 3 algoritmos que possuem como objetivo classificar e dar a nota para um vinho, entre eles estão:
 
 - Regressão Linear: previsão de nota
-- Árvore de Regressão: ????
+- Árvore de Regressão: Classificação do Vinho
 - Árvore de Decisão: classificação do vinho
 - Regressão Logística : classificação de vinho
 
 
+Nossa variável dependente é a variável "quality"  e as nossas variavéis independentes são "alcohol" e "density".
+
 **2.1. Regressão Linear**
 
+Em estátistica, regressão linear é uma técnica que permite explorar e inferir a relação de uma variável dependente (variavel de resposta) com variáveis independentes específicas (variáveis explicativas)
+
+
+Os parâmetros do modelo linear podem ser obtios pela função lm(), commo segue abaixo em seguida é apresentado um resumo do ajuste do modelo pela função summary.
 ```{r}
 
-#treinando o modelo
+#ajuste do modelo
 linear <- lm(quality ~
-               freesulfurdioxide+residualsugar+alcohol+pH+density+sulphates+fixedacidity+volatileacidity+qualidadeVinho, data=train)
+               alcohol, data=train)
 
 summary(linear)
 ```
 
-Funções e análise do modelo.
+Antes de interpretar o modelo e fazer inferência, é importante que sejam verificados os pressupostos através da análise dos resíduos
+
 ```{r}
-
-# Coeficiente
-coefficients(linear) 
-confint(linear, level=0.95)
-
-#Prevendo valores
-fitted(linear)
-
-#Resíduos
-residuals(linear) 
-
-
-anova(linear)
-vcov(linear) # matriz de covariancia
-influence(linear)
-
-layout(matrix(c(1,2,3,4),2,2)) # optional 4 graphs/page 
+layout(matrix(c(1,2,3,4),2,2))
 plot(linear)
 
+
+
 ```
 
-**2.1. Cross Validation**
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
+Prediçãõ
 
+Assumindo que o ajuste do modelo está adequado, pode-se obter o gráfico dos valores preditos sobre o diagrama de dispersão dos valores obvservados
+```{r}
+## Intervalo de valores para predição
+## Valores preditos
+ypred <- predict(linear, newdata = test, interval = "confidence")
+## Inclui valores preditos no data frame
+pred <- cbind(test, ypred)
+summary(pred)
+```
+agora podemos visualizar o modelo ajustado aos dados
 
 ```{r}
-#install.packages("DAAG")
-#library(DAAG)
-cv.lm(data=baseVinhoBrancoAtual, linear, m=2) # 3 fold cross-validation
+## Gráfico de dispersão
 
+library(ggplot2)
+layout(matrix(c(1,2),1,2))
+
+ggplot(data=train,aes(y=quality,x=alcohol))+geom_point()+geom_smooth(method="lm")
+ggplot(data=train,aes(y=quality,x=density))+geom_point()+geom_smooth(method="lm")
 ```
 
-Precisamos criar a arvore de regressão
-```{r}
+
+**Qual é a analse desses gráficos ai? To pensando em tirar por que não estou conseguindo analisar os resultados obtidos**
+????????????????????????????????????????????
+????????????????????????????????????????????
+????????????????????????????????????????????
+????????????????????????????????????????????
+????????????????????????????????????????????
+????????????????????????????????????????????
 
 
-```
 
 **2.3 - Arvore de decisão**
 
@@ -497,109 +502,117 @@ Podemos classificar a densidade do vinho em:
 
 ```
  **2.3 - Regressão Logistica**
+ 
+ 
+ Regressão Logistica é uma técnica estátistica muito poderosa, utilizada para modelagem de saídas binárias (sim ou não). Quando se quer medir a relação de uma variável dependente binária com uma ou mais variáveis independentes, é comum utilizar esta técnica.
+ 
+ 
+ Veja que as duas variáveis são estatisticamente significantes. Porém enquanto a variável alcohol e positivamente significante a variável density é negativamente.
+ 
 ```{r}
 
-reg_logistica <- glm(quality ~ density, data = train)
-
-summary(reg_logistica)
+reg_logistica <- glm(quality ~ density+alcohol, data = train)
+summary(reg_logistica)$coefficients
 
 ```
 
+Utilizaremos a função predict para aplicar o modelo em nossa base de teste e já aproveitaremos para construir uma nova base de teste com as projeções feita pelo modelo reg_logistica.
+
 ```{r}
-table(train$quality, predict(reg_logistica) > 0.5)
+
+pred.Teste = predict(reg_logistica,test, type = "response")
+Teste_v2 = cbind(test,pred.Teste)
 
 ```
+Utilizaremos a curva ROC e o KS para saber se o modelo está bom.
 
 ```{r}
-ajuste_glm <- glm(qualidadeVinho ~ density, data = train, family = binomial)
-summary(ajuste_glm)
 
+#install.packages('ROCR')
+#library(ROCR) 
+pred.val = prediction(pred.Teste, Teste_v2$qualidadeVinho) 
+
+# calculo da auc (area under the curve) 
+auc = performance(pred.val,"auc") 
+auc
+
+performance = performance(pred.val, 'tpr', 'fpr')
+
+# Plot the ROC curve
+plot(performance, col = 'blue', lwd = 5)
+
+
+#Calculating KS statistics
+ks = max(attr(performance, 'y.values')[[1]] - (attr(performance, 'x.values')[[1]]))
+ks
 ```
 
-```{r}
-# Ligaçao probit
-#summary(train)
+Um KS de 0.35 ee uma curva ROC com AUC de 0.73 tornam nosso modelo muito bom.
 
-reg_logistica_probit <- glm(qualidadeVinho ~ density, data = train, family = binomial(link = "probit"))
-summary(reg_logistica_probit)
+Iremos utilizar uma matriz de confusão, mas iremos definir o corte usado na projeção para dizer ser o vinho é bom ou não.
 
-
-
-
-```
+Iremos trabalhar com 6
 
 ```{r}
-#Exibindo o gráfico de curvas ajustasdas
-par (mfrow=c(1,2))
+#confusion matrix
 
-
-ggplot(train, aes(x=qualidadeVinho, y=alcohol)) + 
-  geom_point() + 
-  stat_smooth(aes(colour = "Logit"), method="glm", family=binomial, se=FALSE) +
-  stat_smooth(aes(colour = "Probit"), method="glm", family=binomial(link = "probit"), se=FALSE) +
-  stat_smooth(aes(colour = "Complementar Log-Log"), method="glm", family=binomial(link = "cloglog"), se=FALSE) +
-  labs(colour = "Função de ligação")
-
-ggplot(train, aes(x=qualidadeVinho, y=density)) + 
-  geom_point() + 
-  stat_smooth(aes(colour = "Logit"), method="glm", family=binomial, se=FALSE) +
-  stat_smooth(aes(colour = "Probit"), method="glm", family=binomial(link = "probit"), se=FALSE) +
-  stat_smooth(aes(colour = "Complementar Log-Log"), method="glm", family=binomial(link = "cloglog"), se=FALSE) +
-  labs(colour = "Função de ligação")
-
-```
-
-```{r}
-#aqui estou usando o teste chi quadrado, que é o mais indicado para regressão logística
-
-anova(ajuste_glm, test="Chisq")
-
-```
-
-```{r}
+table(test$qualidadeVinho, pred.Teste > 6)
 
 
 ```
 
+Dos 387 vinhos bons, o modelo conseguiu prever 312 corretamente. Dos 818 vinhos ruins o modelos acertou 431.
+
+
+**Arvore de Reressão**
+
+As árvores de regressão são em tudo idênticas às arvores de decisão. A diferença principal reside no fato de as folhas das primeiras conterem previsões numéricas e não decisões.
+
 ```{r}
-#avaliação de acurácia e verificação de taxas de erro
-
-modelo_acuracia <- lm(quality ~ fixedacidity+volatileacidity+residualsugar+chlorides+freesulfurdioxide+density+pH+sulphates+alcohol)
-
-#criando o intervalo de confiança com os valores preditos
-Val_pred <- predict(modelo_acuracia,interval = "prediction", level = 0.95) 
-#fix(Val_pred)
-
-fit <- Val_pred[,1] # valores preditos
-lower <- Val_pred[,2] # limite inferior
-upper <- Val_pred[,3] # limite superior
-
-mse <- mean((train$quality - fit)^2)
-sqrt(mse)
+hist(train$quality)
 
 ```
 
 ```{r}
+library(rpart)
+
+arv.regr <- rpart(qualidadeVinho  ~ alcohol + density, data= train)
+
+plot(arv.regr)
+text(arv.regr,cex=.75)
+
+```
+
+Iremos realizar algumas previsões com o retorno da função rpart
+
+```{r}
+
+prev.arv = predict(arv.regr, test)
+
+```
+
+A função utilizada para obter as previsões do modelo é a função predict igualmente como na função da arvore de decisão. No entanto, as previsões obtidas são numéricas.
+
+Podemos caluclar algumas estátisticas que nos dêem alguma informação sobre isso. Uma possível estátistica para avaliar as previsões da árvore é o erro absoluto médio. isto é, em média qual o erro absoluto das previsões da árvore. Segue abaixo
+
+
+```{r}
+mad = mean(abs(prev.arv-test$qualidadeVinho))
+mad
+
+```
+
+Este número significa que em média a árvore de regressão erra à volta de 0.37% na previsão do índice se um vinho é bom ou ruim.
+
+```{r}
+
 
 
 ```
 
 
-**simulação de previsão para o Vinho**
-
-```{r}
-train_Final<-cbind(train,Val_pred)
-
-fix(train_Final)
-
-```
-
 ```{r}
 
-
-```
-
-```{r}
 
 
 ```
