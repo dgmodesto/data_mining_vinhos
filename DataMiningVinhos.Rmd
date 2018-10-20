@@ -407,16 +407,59 @@ Nossa variável dependente é a variável "quality"  e as nossas variavéis inde
 
 Em estátistica, regressão linear é uma técnica que permite explorar e inferir a relação de uma variável dependente (variavel de resposta) com variáveis independentes específicas (variáveis explicativas)
 
+Para calcular o coeficiente de correlação linear de Pearson entre as variáveis, utilize a função "cor""
 
-Os parâmetros do modelo linear podem ser obtios pela função lm(), commo segue abaixo em seguida é apresentado um resumo do ajuste do modelo pela função summary.
+```{r}
+
+
+cor(quality,alcohol)
+cor(quality,density)
+
+```
+
+
+A função retornou o valor 0.422 o que evidencia uma boa relação linear entre as variáveis em estudo. Para avaliar se esse resultado é significativo, pode-se realizar um Teste de hipótese para o coeficiente de correlação.
+
+```{r}
+
+#ajuste do modelo
+cor.test(quality,alcohol)
+cor.test(quality,density)
+
+
+```
+
+Como o valor P do teste(p-value < 2.2e-16) é bem pequeno,conclui-se que o valor do Coeficiente de Correlação Lienar de Pearson tem significância Estátistica.
+
+
+
+Os parâmetros do modelo linear podem ser obtios pela função lm(), como segue abaixo em seguida é apresentado um resumo do ajuste do modelo pela função summary.
 ```{r}
 
 #ajuste do modelo
 linear <- lm(quality ~
-               alcohol, data=train)
+               alcohol+density, data=train)
 
 summary(linear)
 ```
+
+Do comando acima pode-se obter os erros-padrão (Std. Error) das estimativas dos coeficientes de regressão
+alcoho: EP(β0) = 0.1273 e EP(β1) = 0.0119
+density: EP(β0) = 0.1273 e EP(β1) = 8.863.
+
+Alem disso, obtém-se o valor do Coeficiente de determinação (Multiple R-square), R² = 0.184
+
+Com a função anova, pode-se construir a Tabela da Análise de Variância
+
+```{r}
+
+anova(linear)
+
+
+```
+
+Da tabela ANOVA, obtém-se o Quadrado Médio (mean sq) Residual, que é uma estimativa para a variância dos erros (σ²), ou seja, s² = 1
+
 
 Antes de interpretar o modelo e fazer inferência, é importante que sejam verificados os pressupostos através da análise dos resíduos
 
@@ -428,7 +471,14 @@ plot(linear)
 
 ```
 
-Prediçãõ
+
+Exibiremos os Valores Ajustados e os Resíduos do ajuste
+
+linear$residuals
+linear$fitted.values
+
+
+Predição
 
 Assumindo que o ajuste do modelo está adequado, pode-se obter o gráfico dos valores preditos sobre o diagrama de dispersão dos valores obvservados
 ```{r}
@@ -451,15 +501,44 @@ ggplot(data=train,aes(y=quality,x=alcohol))+geom_point()+geom_smooth(method="lm"
 ggplot(data=train,aes(y=quality,x=density))+geom_point()+geom_smooth(method="lm")
 ```
 
+Para construir os intervalos de confiança (95%) para os coeficientes da regressão, utiliza-se o seguinte comando:
 
-**Qual é a analse desses gráficos ai? To pensando em tirar por que não estou conseguindo analisar os resultados obtidos**
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
-????????????????????????????????????????????
+```{r}
 
+confint(linear)
+
+```
+
+Para proceder o teste F da significância da Regressão e os testes T individuais. Iremos verificar o Valor P para cada caso através da saída da função summary
+
+
+
+```{r}
+
+x0 = data.frame(train=3)
+
+head(predict(linear, x0,interval = "confidence"))
+
+```
+
+Se x0 é um vetor, por exemplo X0 = (0,1 ... 34,35), pode-se construir gráficos com as estimativas pontuais e intervalares das respostas médias e individuais,
+
+
+```{r}
+par(mfrow=c(1,2))
+x0 = data.frame(train=seq(0,4014,1))
+
+
+p1 = predict(linear,x0,interval="confidence",se=T)
+matplot(x0,p1$fit,lty=c(1,2,2),type="l",xlab="Qualidade",ylab="Alcohol")
+
+p2 = predict(linear,x0,interval="prediction",se=T)
+matplot(x0,p2$fit,lty=c(1,2,2),type="l",xlab="Experiência",ylab="density")
+
+
+```
+
+Destaca-se, no entanto que os intervalos de confiança aqui construidos foram feitos apenas em caráter ilustrativo, uma vez que, como suposições para este modelo não foram satisfeitas, qualquer inferência feitar dele e inválida.
 
 
 **2.3 - Arvore de decisão**

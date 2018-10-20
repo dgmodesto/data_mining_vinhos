@@ -33,8 +33,8 @@ No fechamento desta etapa colocar
 2.5	explicar a técnica ok\	
 2.6	qual a variável dependente, ok 
 2.7	quais são as variáveis independentes, ok
-2.8	relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1. ok +- (Falta regressão linear)
-2.9	saída do modelo (análise) ok +- (Falta regressão linear)
+2.8	relações entre elas (numéricas e gráficos) (verificar se todas já foram efetuadas adequadamente na parte 1. ok
+2.9	saída do modelo (análise) ok
 2.10	qualidade do modelo
 2.11	O que cada modelo gerou de resultados?
 
