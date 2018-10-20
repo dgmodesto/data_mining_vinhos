@@ -1,0 +1,410 @@
+---
+title: "AnaliseQualidadeVinhos"
+output: html_document
+---
+
+# Modelo preditivo de qualidade de vinho
+
+Nos últimos anos o setores de vinícola e tecnologia estão sendo foco de diversos tipos de desenvolvimento. Será apresentado neste trabalho a aplicação de análises exploratórias dos dados de vinhos utilizando a linguagem R. O objetivo é abordar alguns dos  pressupostos que interligam o setor vinícola com técnicas específicas de data mining e verificar até que ponto esta interligação pode melhorar a tomada de decisão.
+
+# 1. Criando o ambiente
+
+** 1.1. Instalação das bibliotecas**
+
+```{r setup, include=FALSE}
+
+# install.packages("dplyr")
+# install.packages('readr')
+# install.packages('plotly')
+#install.packages("corrgram")
+# install.packages('ggplot2')
+#install.packages('gmodels')
+# install.packages('psych')
+#install.packages("corrplot")
+#install.packages('tree')
+#install.packages('party')
+
+# library('dplyr')
+library('readr')
+library('plotly')
+library('ggplot2')
+library('gmodels')
+library('psych')
+library('corrgram')
+library('corrplot')
+library('tree')
+library('party')
+
+# options( warn = -1 )
+```
+
+
+** 1.2 Carregando a base de dados **
+
+
+```{r echo=FALSE}
+
+base = read.csv2("data/base.csv")
+options("scipen" = 2)
+
+head(base, n=4) 
+
+```
+
+# 2. Estrutura dos Dados
+
+
+**2.1. Dimensões da base**
+
+Vizualização da dimensão da base, observando a quantidade de registros e colunas presente no dataset.
+
+```{r,echo=FALSE}
+dim(base)
+```
+Observa-se que a base contém 6497 registos e 14 variáveis .
+
+** 2.2. Variáveis**
+
+Apresenta todas as variáveis do conjunto de dados.
+```{r}
+names(base)
+```
+
+
+** 2.3. Tipo das variáveis**
+
+Identificando o tipo das variável do dataset.
+
+```{r,echo=FALSE}
+
+classes <- c(class(base$id_vinho),
+             class(base$fixedacidity),
+             class(base$volatileacidity),
+             class(base$citricacid),
+             class(base$residualsugar),
+             class(base$chlorides),
+             class(base$freesulfurdioxide),
+             class(base$totalsulfurdioxide),
+             class(base$density),
+             class(base$pH),
+             class(base$sulphates),
+             class(base$alcohol),
+             class(base$quality),
+             class(base$Vinho))
+classes
+
+```
+Ao avaliar o tipo de cada variável,a variável Vinho é a única identificada como categórica. Por ser categórica, necessita-se convertê-la em númerica para a possibilidade de aplicar um modelo preditivo.
+
+**2.4.Resumo Estatístico**
+
+Análise da distribuição das variáveis no dataset através da função *summary*.
+```{r,echo=FALSE}
+summary(base)
+```
+
+# 3. Tratamento das variáveis **
+
+**3.1. Variáveis nulas**
+
+Identificação de variáveis com valores nulos a partir do comando *is.na*, sendo contabilizadas através do comando *sum*. Caso o valor de contabilização seja diferente de 0, deve-se aplicar algum método para tratamento dos valores.
+
+```{r echo=FALSE}
+sum(is.na(base))
+
+```
+** 3.2. Conversão dos dados **
+
+Ao identificar uma variável categórica, converte-se para binária para que algoritmos de machine learning sejam possíveis de se aplicar. No cenário abaixo, a variável Vinho é categórica e seus valores convertidos em:
+
+ * 0 - RED
+ * 1 - WHITE
+ 
+```{r echo=FALSE}
+base$Vinho = c(0,1)[as.numeric(base$Vinho)]
+
+head(base)
+
+```
+
+
+# 3. Detecção de Outliers 
+
+Utilizando a regra IQR, detecta-se e remove todos os dados considerados outliers.
+
+
+Rpresentação em boxplot das variáveis, identificando outliers nos seus valores.
+```{r echo=FALSE}
+teste <- base
+teste$id_vinho <- NULL
+
+boxplot(teste,col='gray',main='Identificação de Outliers',xaxt = 'n',  xlab = '')
+axis(1, labels = FALSE)
+text(x =  seq_along(colnames(teste)), y = par("usr")[3] - 1, srt = 45, adj = 1,labels = colnames(teste), xpd = TRUE)
+
+```
+
+Aplicação do método IQR para identificação e remoção de outliers.
+```{r}
+vars <- c('fixedacidity','volatileacidity','citricacid','residualsugar','chlorides','freesulfurdioxide','totalsulfurdioxide','density','pH','sulphates','alcohol')
+Outliers <- c()
+for(i in vars){
+    max <- quantile(base[,i],0.75, na.rm=TRUE) + (IQR(base[,i], na.rm=TRUE) * 1.5 )
+    min <- quantile(base[,i],0.25, na.rm=TRUE) - (IQR(base[,i], na.rm=TRUE) * 1.5 )
+    
+    idx <- which(base[,i] < min | base[,i] > max)
+    print(paste(i, length(idx), sep=''))
+    Outliers <- c(Outliers, idx)
+}
+Outliers <- sort(Outliers)
+
+base <- base[-Outliers,]
+```
+
+Representação em boxplot das variáveis, sem os outliers.
+
+```{r echo=FALSE}
+outliersBase <- base
+outliersBase$id_vinho <- NULL
+
+boxplot(outliersBase,col='gray',main='Tratamento após identificação de Outliers',xaxt = 'n',  xlab = '')
+axis(1, labels = FALSE)
+text(x =  seq_along(colnames(outliersBase)), y = par("usr")[3] - 1, srt = 45, adj = 1,labels = colnames(outliersBase), xpd = TRUE)
+
+```
+
+# 4. Análise exploratória dos dados
+
+
+**4.1. Qualidade do Vinho**
+
+Através do gráfico em barras, identifica-se a distribuição das notas para os vinhos brancos e vermelhos.
+```{r echo=FALSE}
+ggplot(base,aes(x=quality))+geom_bar(stat = "count",position = "dodge")+
+  scale_x_continuous(breaks = seq(1,10,1))+
+  ggtitle("Distribuição da Qualidade de Vinhos")+
+  theme_classic()
+
+```
+
+Observando, a média da qualidade dos vinhos se encontram entre 5 e 6 na faixa de 3 a 9 entre as notas.
+
+
+**4.2. Qualidade do Vinho**
+
+A variável qualidadeVinho é criada, classificando todos os vinhos acima da nota 5 em bons ou ruins, dependendo da sua nota de qualidade.
+```{r echo=FALSE}
+
+
+base$qualidadeVinho<-ifelse(base$quality>5,1,0)
+
+ggplot(base,aes(x=qualidadeVinho,fill=factor(qualidadeVinho)))+geom_bar(stat = "count",position = "dodge")+
+  scale_x_continuous(breaks = seq(0,1,1))+
+  ggtitle("Classificaçao dos Vinhos (Bom/Ruim)")+
+  scale_fill_manual(labels = c("Ruim", "Bom"), 
+                    values= c("#F26584", "#54b4e9")) +
+  theme_classic()
+
+```
+Mesmo limitando que a nota mínima dos vinhos seja acima de 5, a maioria dos vinhos ainda são classificados como bons. 
+
+**4.3. Tipo do Vinho**
+
+Após limitar a base, verificamos o tipo dos vinhos que são classificados em *Vermelho* ou *Branco*.
+```{r echo=FALSE}
+
+
+ggplot(base,aes(x=Vinho,fill=factor(Vinho)))+geom_bar(stat = "count",position = "dodge")+
+  scale_x_continuous(breaks = seq(0,1,1))+
+  ggtitle("Tipo de Vinho Vinhos (Vermelho/Branco)")+
+  scale_fill_manual(labels = c("Vermelho", "Branco"), 
+                    values= c("#F26584", "#54b4e9")) +
+  theme_classic()
+
+```
+Observando a classificação dos vinhos, a maioria são determinados como do tipo Branco.
+
+
+# 5. Análise exploratória dos dados - Vinhos Branco
+
+
+**5.1. Base de Dados -  vinhos brancos**
+
+Devido a maior quantidade de vinhos brancos no dataset, iremos explorar e analisar somente vinhos brancos no nosso modelo.
+```{r}
+
+baseVinhoBranco <- subset(base, Vinho=="1",
+                          select=c(quality,qualidadeVinho,fixedacidity,volatileacidity,citricacid,residualsugar,
+chlorides,freesulfurdioxide,totalsulfurdioxide,density,pH,sulphates,alcohol))
+
+head(baseVinhoBranco)
+```
+
+**5.2. Mapa de Correlação**
+
+Análise de correlação entre variáveis por método de Pearson, identificando as principais variáveis que influenciam a qualidade do vinho.
+
+```{r,echo=FALSE}
+
+matcor <- cor(base)
+
+panel.cor <- function(x, y, digits=2, prefix ="", cex.cor,
+                      ...)  {
+  usr <- par("usr")
+  on.exit(par(usr))
+  par(usr = c(0, 1, 0, 1))
+  r <- cor(x, y , use = "pairwise.complete.obs")
+  txt <- format(c(r, 0.123456789), digits = digits) [1]
+  txt <- paste(prefix, txt, sep = "")
+  if (missing(cex.cor))
+    cex <- 0.8/strwidth(txt)
+  text(0.5, 0.5, txt, cex = cex * abs(r))
+}
+
+corrplot::corrplot(matcor, method="circle", order="hclust")
+
+```
+
+Correlação entre as variáveis em relação a qualidade dos vinhos (quality) identificando o nílvel de influência.
+
+```{r,echo=FALSE}
+#correlação de todas as variáveis, ordenadas de 1 a -1
+cor(baseVinhoBranco$quality,baseVinhoBranco$totalsulfurdioxide)
+cor(baseVinhoBranco$quality,baseVinhoBranco$freesulfurdioxide)
+cor(baseVinhoBranco$quality,baseVinhoBranco$residualsugar)
+cor(baseVinhoBranco$quality,baseVinhoBranco$citricacid)
+cor(baseVinhoBranco$quality,baseVinhoBranco$alcohol)
+cor(baseVinhoBranco$quality,baseVinhoBranco$pH)
+cor(baseVinhoBranco$quality,baseVinhoBranco$density)
+cor(baseVinhoBranco$quality,baseVinhoBranco$sulphates)
+cor(baseVinhoBranco$quality,baseVinhoBranco$fixedacidity)
+cor(baseVinhoBranco$quality,baseVinhoBranco$chlorides)
+cor(baseVinhoBranco$quality,baseVinhoBranco$volatileacidity)
+```
+
+
+**5.2. Propriedades dos Vinhos**
+
+Analisaremos algumas propriedades do vinho que consideramos fundamentais para a sua qualidade. 
+
+
+Verificação da densidade dos vinhos, determinados em faixas.
+```{r,echo=FALSE}
+ggplot(baseVinhoBranco,aes(x=density,fill=factor(qualidadeVinho)))+geom_density(alpha=0.25)+
+  geom_vline(aes(xintercept=mean(density[qualidadeVinho==0],na.rm=T)),color="red",linetype="dashed",lwd=1)+
+  geom_vline(aes(xintercept=mean(density[qualidadeVinho==1],na.rm=T)),color="blue",linetype="dashed",lwd=1)+
+  scale_x_continuous(breaks = seq(0.9,1.1,0.05))+
+  xlab(label = "Densidade dos vinhos")+
+    ggtitle("Distribuição da Densidade dos Vinhos")+
+  scale_fill_manual(labels = c("Ruim", "Bom"), 
+                    values= c("#F26584", "#54b4e9")) +
+  theme_classic()
+```
+
+```{r,echo=FALSE}
+ggplot(base,aes(x=alcohol,fill=factor(qualidadeVinho)))+geom_density(alpha=0.25)+
+  geom_vline(aes(xintercept=mean(alcohol[qualidadeVinho==0],na.rm=T)),linetype="dashed",lwd=1)+
+  geom_vline(aes(xintercept=mean(alcohol[qualidadeVinho==1],na.rm=T)),linetype="dashed",lwd=1)+
+  scale_x_continuous(breaks = seq(8,15,1))+
+  xlab(label = "Nível de Álcool")+
+  ggtitle("Distribuição do Nível de Álcool entre Vinhos")+
+    scale_fill_manual(labels = c("Ruim", "Bom"), 
+                    values= c("#F26584", "#54b4e9")) +
+  theme_classic()
+```
+Explorando os plots, os dados demonstram as duas principais propriedades do vinho branco. Concluímos que os melhores vinhos possuem o teor alcoólico inferior a 0.4, porém a sua densidade é similar dos vinhos considerados ruins. 
+
+# 6. Aplicando Modelos
+
+
+A nossa base de vinhos pode ser classificada tanto como um problema de Classificação quanto de Regressão. Iremos aplicar 3 algoritmos que possuem como objetivo classificar e dar a nota para um vinho, entre eles estão:
+
+- Regressão Linear: previsão de nota
+- Árvore de Decisão: classificação do vinho
+- Regressão Logística : classificação de vinho
+
+
+** 6.1. Seleção de variáveis (Regressão) **
+
+
+Após separação das bases, aplica-se o método Stepwise para a seleção de variáveis.
+
+```{r,echo=FALSE}
+modelo1 <- lm(quality ~ qualidadeVinho+totalsulfurdioxide+freesulfurdioxide+residualsugar+citricacid+alcohol+pH+density+sulphates+fixedacidity+chlorides+volatileacidity, data=baseVinhoBranco)
+
+show(modelo1)
+```
+
+```{r,echo=FALSE}
+stepwise<-step(modelo1,direction="both",trace=FALSE)
+stepwise
+```
+
+Através do método stepwise, que aplica tanto a função forward quanto backward, mantemos 10 das 14 variáveis iniciais.
+
+`
+```{r,echo=FALSE}
+
+names(baseVinhoBranco)
+
+
+```
+
+** 6.1. Base de Treino e Teste**
+
+Criação da base de dados para treino e teste do modelo, sendo 70% das observações dedicados a treino e 30% para testes.
+
+```{r,echo=FALSE}
+attach(baseVinhoBranco)
+
+df = subset(baseVinhoBranco, select = -c(citricacid,totalsulfurdioxide,
+                                         alcohol))
+
+
+smp_size <- floor(0.75 * nrow(df))
+
+set.seed(42)
+train_ind <- sample(seq_len(nrow(df)), size = smp_size)
+
+train <- df[train_ind, ]
+test <- df[-train_ind, ]
+
+```
+
+
+
+#### 6.2. Regressão
+
+
+
+**6.2.1. Regressão Linear**
+
+Treinando o modelo, utilizando como target a variável qualidade (quality).
+
+```{r}
+
+#treinando o modelo
+linear.fit <- lm(quality ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
+    pH + density + fixedacidity ,data=train)
+
+pred <- predict(linear,newdata=test,type='response')
+pred_quality <- round(pred)
+sprintf( "Acurácia: %f", sum(pred_quality == test$quality) / nrow(test) )
+
+```
+
+Funções e análise do modelo.
+```{r}
+summary (linear.fit)
+
+```
+
+**6.2.2. Cross Validation**
+
+```{r}
+par(mfrow = c(2, 2))  # Split the plotting panel into a 2 x 2 grid
+plot(linear.fit)  # Plot the model information
+
+```
+
+
