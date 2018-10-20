@@ -35,8 +35,7 @@ library('corrgram')
 library('corrplot')
 library('tree')
 library('party')
-library(rpart)
-library(ROCR)
+library('rpart')
 
 # options( warn = -1 )
 ```
@@ -377,6 +376,10 @@ test <- df[-train_ind, ]
 #### 6.2. Regressão
 
 
+Abaixo apresentamos dois algoritmos de regressão utilizando a variável (quality) como target para previsão da qualidade do vinho. Os algoritmos são:
+- Regressão Linear
+- Árvore de Regressão
+
 **6.2.1. Regressão Linear**
 
 Em estátistica, regressão linear é uma técnica que permite explorar e inferir a relação de uma variável dependente (variavel de resposta) com variáveis independentes específicas (variáveis explicativas)
@@ -395,37 +398,43 @@ sprintf( "Acurácia: %f", sum(pred_quality == test$quality) / nrow(test))
 
 ```
 
-A acurácia obtida com esse modelo foi de 0.73.
 
 Funções e análise do modelo.
 ```{r, echo=FALSE}
 summary (linear.fit)
 
 ```
+A acurácia obtida com esse modelo foi de 73% para os dados de testes e 66% para os dados de treino.
 
 
-**6.2.2. Arvore de decisão**
+**6.2.2. Árvore de Regressão**
 
 Árvore de decisão é um modelo gráfico que pode ser desenhado geralmente em forma de fluxogramas ou diagramas. Essa representação auxilia a explorar todas as alternativas de uma determinada decisão e seus possíveis resultados.
 
 
 ```{r, echo=FALSE}
-par (mfrow=c(1,2))
+library(rpart)
 
-arvore.output <- ctree(quality ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
-                       pH + density + fixedacidity, data = train)
-plot(arvore.output)
+
+fit <- rpart(quality ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
+    pH + density + fixedacidity ,data=train)
+
+pred <- predict(fit, newdata = test)
+
 ```
 
-Verificaremos agora a acurácia desse modelo:
 
-```{r, echo=FALSE}
-pred_arvore_devisao <- predict(arvore.output,newdata=test,type='response')
-pred_arvore_devisao_quality <- round(pred_arvore_devisao)
-sprintf( "Acurácia: %f", sum(pred_arvore_devisao_quality == test$quality) / nrow(test))
+```{r}
+printcp(fit) # display the results 
+plotcp(fit) # visualize cross-validation results 
+summary(fit) # detailed summary of splits
 ```
 
-Obtivemos uma acurácia de 0.72
+Obtivemos uma acurácia de 76% com a média de erro de 6.53% .
+
+#### 6.3. Classificação
+
+Para os problemas de classificação, utilizaremos o target *qualidadeVinho*  para classificar se o vinho é bom ou ruim.
 
 
 **6.2.3. Regressão Logística**
@@ -434,96 +443,33 @@ Regressão Logística é uma técnica estatística muito poderosa, utilizada par
 
 ```{r, echo=FALSE}
 
-reg_logistica <- glm(quality ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
-                       pH + density + fixedacidity, data = train)
+reg_logistica <- glm(qualidadeVinho ~ quality +  residualsugar + 
+                       density , data = train)
 summary(reg_logistica)$coefficients
 ```
-
-Utilizaremos a função predict para aplicar o modelo em nossa base de teste e já aproveitaremos para construir uma nova base de teste com as projeções feita pelo modelo reg_logistica.
+              aproveitaremos para construir uma nova base de teste com as projeções feita pelo modelo reg_logistica.
 
 ```{r, echo=FALSE}
 
 pred.reg.log = predict(reg_logistica,test, type = "response")
 pred_reg_log_quality <- round(pred.reg.log)
-sprintf( "Acurácia: %f", sum(pred_reg_log_quality == test$quality) / nrow(test))
-
-Teste_v2 = cbind(test,pred.Teste)
+sprintf( "Acurácia: %f", sum(pred_reg_log_quality == test$qualidadeVinho) / nrow(test))
 
 ```
 
-Obtivemos uma acurácia de 0.73 aqui.
-
-Utilizaremos a curva ROC e o KS para saber se o modelo está bom.
-
-```{r, echo=FALSE}
-pred.val = prediction(pred.reg.log, Teste_v2$qualidadeVinho) 
-
-# calculo da auc (area under the curve) 
-auc = performance(pred.val,"auc") 
-auc
-
-performance = performance(pred.val, 'tpr', 'fpr')
-
-# Plot the ROC curve
-plot(performance, col = 'blue', lwd = 5)
+Obtivemos uma acurácia 95%.
 
 
-#Calculating KS statistics
-ks = max(attr(performance, 'y.values')[[1]] - (attr(performance, 'x.values')[[1]]))
-ks
-```
-
-Um KS de 0.35 ee uma curva ROC com AUC de 0.73 tornam nosso modelo muito bom.
-
-Iremos utilizar uma matriz de confusão, mas iremos definir o corte usado na projeção para dizer ser o vinho é bom ou não.
-
-Iremos trabalhar com 6
-
-```{r, echo=FALSE}
-#confusion matrix
-
-table(test$qualidadeVinho, pred.reg.log > 6)
-
-
-```
-
-Dos 335 vinhos ruins, o modelo conseguiu prever 335 corretamente. Dos 749 vinhos bons o modelo acertou 747.
-
-
-**6.2.4. Árvore de Reressão**
+**6.3.2. Árvore de Decisão**
 
 As árvores de regressão são em tudo idênticas às arvores de decisão. A diferença principal reside no fato de as folhas das primeiras conterem previsões numéricas e não decisões.
 
 ```{r, echo=FALSE}
-hist(train$quality)
+
+fit <- rpart(qualidadeVinho ~ quality +  residualsugar + 
+                       density,method="class", data=train)
+
 ```
-
-
-
-```{r, echo=FALSE}
-arv.regr <- rpart(quality  ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
-                       pH + density + fixedacidity, data= train)
-
-plot(arv.regr)
-text(arv.regr,cex=.75)
-```
-
-Realizaremos algumas previsões com o retorno da função rpart
-
-```{r, echo=FALSE}
-prev.arv = predict(arv.regr, newdata=test)
-```
-
-A função utilizada para obter as previsões do modelo é a função predict igualmente como na função da árvore de decisão. No entanto, as previsões obtidas são numéricas.
-
-Podemos calcular algumas estátisticas que nos dêem alguma informação sobre isso. Uma possível estátistica para avaliar as previsões da árvore é o erro absoluto médio. Isto é, em média qual o erro absoluto das previsões da árvore. Segue abaixo:
-
-```{r, echo=FALSE}
-mad = mean(abs(prev.arv-test$qualidadeVinho))
-mad
-```
-
-Este número significa que em média a árvore de regressão erra por volta de 5.23% na previsão do índice se um vinho é bom ou ruim.
 
 
 
@@ -548,7 +494,7 @@ Para esta análise, indicaríamos como técnicas Supervisionadas:
   - SVM
 
 E para técnicas Não Supervisionadas indicaríamos:
-  - KNN (para clusters de vinhos bons ou ruim)
+  - KNN (para clusters de vinhos bons ou ruinsh)
 
 
 ##==================================================================
