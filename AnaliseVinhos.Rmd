@@ -406,5 +406,7 @@ par(mfrow = c(2, 2))  # Split the plotting panel into a 2 x 2 grid
 plot(linear.fit)  # Plot the model information
 
 ```
+Inserir o calculo do MAPE, MSE ou RMSE.
+```{r}
 
-
+```
