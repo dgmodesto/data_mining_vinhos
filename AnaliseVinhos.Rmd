@@ -23,6 +23,7 @@ Nos últimos anos o setores de vinícola e tecnologia estão sendo foco de diver
 #install.packages("corrplot")
 #install.packages('tree')
 #install.packages('party')
+#install.packages('ROCR')
 
 # library('dplyr')
 library('readr')
@@ -34,6 +35,8 @@ library('corrgram')
 library('corrplot')
 library('tree')
 library('party')
+library(rpart)
+library(ROCR)
 
 # options( warn = -1 )
 ```
@@ -66,7 +69,7 @@ Observa-se que a base contém 6497 registos e 14 variáveis .
 ** 2.2. Variáveis**
 
 Apresenta todas as variáveis do conjunto de dados.
-```{r}
+```{r,echo=FALSE}
 names(base)
 ```
 
@@ -109,7 +112,7 @@ summary(base)
 
 Identificação de variáveis com valores nulos a partir do comando *is.na*, sendo contabilizadas através do comando *sum*. Caso o valor de contabilização seja diferente de 0, deve-se aplicar algum método para tratamento dos valores.
 
-```{r echo=FALSE}
+```{r, echo=FALSE}
 sum(is.na(base))
 
 ```
@@ -120,7 +123,7 @@ Ao identificar uma variável categórica, converte-se para binária para que alg
  * 0 - RED
  * 1 - WHITE
  
-```{r echo=FALSE}
+```{r, echo=FALSE}
 base$Vinho = c(0,1)[as.numeric(base$Vinho)]
 
 head(base)
@@ -134,7 +137,7 @@ Utilizando a regra IQR, detecta-se e remove todos os dados considerados outliers
 
 
 Rpresentação em boxplot das variáveis, identificando outliers nos seus valores.
-```{r echo=FALSE}
+```{r, echo=FALSE}
 teste <- base
 teste$id_vinho <- NULL
 
@@ -163,7 +166,7 @@ base <- base[-Outliers,]
 
 Representação em boxplot das variáveis, sem os outliers.
 
-```{r echo=FALSE}
+```{r, echo=FALSE}
 outliersBase <- base
 outliersBase$id_vinho <- NULL
 
@@ -179,7 +182,7 @@ text(x =  seq_along(colnames(outliersBase)), y = par("usr")[3] - 1, srt = 45, ad
 **4.1. Qualidade do Vinho**
 
 Através do gráfico em barras, identifica-se a distribuição das notas para os vinhos brancos e vermelhos.
-```{r echo=FALSE}
+```{r, echo=FALSE}
 ggplot(base,aes(x=quality))+geom_bar(stat = "count",position = "dodge")+
   scale_x_continuous(breaks = seq(1,10,1))+
   ggtitle("Distribuição da Qualidade de Vinhos")+
@@ -193,7 +196,7 @@ Observando, a média da qualidade dos vinhos se encontram entre 5 e 6 na faixa d
 **4.2. Qualidade do Vinho**
 
 A variável qualidadeVinho é criada, classificando todos os vinhos acima da nota 5 em bons ou ruins, dependendo da sua nota de qualidade.
-```{r echo=FALSE}
+```{r, echo=FALSE}
 
 
 base$qualidadeVinho<-ifelse(base$quality>5,1,0)
@@ -211,7 +214,7 @@ Mesmo limitando que a nota mínima dos vinhos seja acima de 5, a maioria dos vin
 **4.3. Tipo do Vinho**
 
 Após limitar a base, verificamos o tipo dos vinhos que são classificados em *Vermelho* ou *Branco*.
-```{r echo=FALSE}
+```{r, echo=FALSE}
 
 
 ggplot(base,aes(x=Vinho,fill=factor(Vinho)))+geom_bar(stat = "count",position = "dodge")+
@@ -231,7 +234,7 @@ Observando a classificação dos vinhos, a maioria são determinados como do tip
 **5.1. Base de Dados -  vinhos brancos**
 
 Devido a maior quantidade de vinhos brancos no dataset, iremos explorar e analisar somente vinhos brancos no nosso modelo.
-```{r}
+```{r, echo=FALSE}
 
 baseVinhoBranco <- subset(base, Vinho=="1",
                           select=c(quality,qualidadeVinho,fixedacidity,volatileacidity,citricacid,residualsugar,
@@ -347,7 +350,6 @@ Através do método stepwise, que aplica tanto a função forward quanto backwar
 
 names(baseVinhoBranco)
 
-
 ```
 
 ** 6.1. Base de Treino e Teste**
@@ -372,41 +374,181 @@ test <- df[-train_ind, ]
 ```
 
 
-
 #### 6.2. Regressão
-
 
 
 **6.2.1. Regressão Linear**
 
+Em estátistica, regressão linear é uma técnica que permite explorar e inferir a relação de uma variável dependente (variavel de resposta) com variáveis independentes específicas (variáveis explicativas)
+
 Treinando o modelo, utilizando como target a variável qualidade (quality).
 
-```{r}
+```{r, echo=FALSE}
 
 #treinando o modelo
 linear.fit <- lm(quality ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
     pH + density + fixedacidity ,data=train)
 
-pred <- predict(linear,newdata=test,type='response')
+pred <- predict(linear.fit,newdata=test,type='response')
 pred_quality <- round(pred)
-sprintf( "Acurácia: %f", sum(pred_quality == test$quality) / nrow(test) )
+sprintf( "Acurácia: %f", sum(pred_quality == test$quality) / nrow(test))
 
 ```
 
+A acurácia obtida com esse modelo foi de 0.73.
+
 Funções e análise do modelo.
-```{r}
+```{r, echo=FALSE}
 summary (linear.fit)
 
 ```
 
-**6.2.2. Cross Validation**
 
-```{r}
-par(mfrow = c(2, 2))  # Split the plotting panel into a 2 x 2 grid
-plot(linear.fit)  # Plot the model information
+**6.2.2. Arvore de decisão**
+
+Árvore de decisão é um modelo gráfico que pode ser desenhado geralmente em forma de fluxogramas ou diagramas. Essa representação auxilia a explorar todas as alternativas de uma determinada decisão e seus possíveis resultados.
+
+
+```{r, echo=FALSE}
+par (mfrow=c(1,2))
+
+arvore.output <- ctree(quality ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
+                       pH + density + fixedacidity, data = train)
+plot(arvore.output)
+```
+
+Verificaremos agora a acurácia desse modelo:
+
+```{r, echo=FALSE}
+pred_arvore_devisao <- predict(arvore.output,newdata=test,type='response')
+pred_arvore_devisao_quality <- round(pred_arvore_devisao)
+sprintf( "Acurácia: %f", sum(pred_arvore_devisao_quality == test$quality) / nrow(test))
+```
+
+Obtivemos uma acurácia de 0.72
+
+
+**6.2.3. Regressão Logística**
+
+Regressão Logística é uma técnica estatística muito poderosa, utilizada para modelagem de saídas binárias (sim ou não). Quando se quer medir a relação de uma variável dependente binária com uma ou mais variáveis independentes, é comum utilizar esta técnica.
+
+```{r, echo=FALSE}
+
+reg_logistica <- glm(quality ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
+                       pH + density + fixedacidity, data = train)
+summary(reg_logistica)$coefficients
+```
+
+Utilizaremos a função predict para aplicar o modelo em nossa base de teste e já aproveitaremos para construir uma nova base de teste com as projeções feita pelo modelo reg_logistica.
+
+```{r, echo=FALSE}
+
+pred.reg.log = predict(reg_logistica,test, type = "response")
+pred_reg_log_quality <- round(pred.reg.log)
+sprintf( "Acurácia: %f", sum(pred_reg_log_quality == test$quality) / nrow(test))
+
+Teste_v2 = cbind(test,pred.Teste)
 
 ```
-Inserir o calculo do MAPE, MSE ou RMSE.
-```{r}
+
+Obtivemos uma acurácia de 0.73 aqui.
+
+Utilizaremos a curva ROC e o KS para saber se o modelo está bom.
+
+```{r, echo=FALSE}
+pred.val = prediction(pred.reg.log, Teste_v2$qualidadeVinho) 
+
+# calculo da auc (area under the curve) 
+auc = performance(pred.val,"auc") 
+auc
+
+performance = performance(pred.val, 'tpr', 'fpr')
+
+# Plot the ROC curve
+plot(performance, col = 'blue', lwd = 5)
+
+
+#Calculating KS statistics
+ks = max(attr(performance, 'y.values')[[1]] - (attr(performance, 'x.values')[[1]]))
+ks
+```
+
+Um KS de 0.35 ee uma curva ROC com AUC de 0.73 tornam nosso modelo muito bom.
+
+Iremos utilizar uma matriz de confusão, mas iremos definir o corte usado na projeção para dizer ser o vinho é bom ou não.
+
+Iremos trabalhar com 6
+
+```{r, echo=FALSE}
+#confusion matrix
+
+table(test$qualidadeVinho, pred.reg.log > 6)
+
 
 ```
+
+Dos 335 vinhos ruins, o modelo conseguiu prever 335 corretamente. Dos 749 vinhos bons o modelo acertou 747.
+
+
+**6.2.4. Árvore de Reressão**
+
+As árvores de regressão são em tudo idênticas às arvores de decisão. A diferença principal reside no fato de as folhas das primeiras conterem previsões numéricas e não decisões.
+
+```{r, echo=FALSE}
+hist(train$quality)
+```
+
+
+
+```{r, echo=FALSE}
+arv.regr <- rpart(quality  ~ qualidadeVinho + freesulfurdioxide + residualsugar + 
+                       pH + density + fixedacidity, data= train)
+
+plot(arv.regr)
+text(arv.regr,cex=.75)
+```
+
+Realizaremos algumas previsões com o retorno da função rpart
+
+```{r, echo=FALSE}
+prev.arv = predict(arv.regr, newdata=test)
+```
+
+A função utilizada para obter as previsões do modelo é a função predict igualmente como na função da árvore de decisão. No entanto, as previsões obtidas são numéricas.
+
+Podemos calcular algumas estátisticas que nos dêem alguma informação sobre isso. Uma possível estátistica para avaliar as previsões da árvore é o erro absoluto médio. Isto é, em média qual o erro absoluto das previsões da árvore. Segue abaixo:
+
+```{r, echo=FALSE}
+mad = mean(abs(prev.arv-test$qualidadeVinho))
+mad
+```
+
+Este número significa que em média a árvore de regressão erra por volta de 5.23% na previsão do índice se um vinho é bom ou ruim.
+
+
+
+#### 6.3. Considerações Finais
+
+
+**6.3.1. Comparação entre modelos**
+
+Os modelos de Regressão Linear e Regressão Logística tiveram uma acurácia, apesar de mínima diferença, melhor que a acurácia do modelo de Árvore de Decisão.
+
+A árvore de regressão foi medida com base no erro absoluto médio, em que apresentou uma média de 5.23% de erro, um número baixo de erro, se comparado a acurácia dos outros modelos testados.
+
+Indicaríamos a técnica da árvore de regressão para previsão de vinhos bons ou ruins, pois foi a que apresentou melhor resultado quanto ao baixo índice de erro.
+
+
+
+**6.3.2. Outras técnicas indicadas**
+
+Para esta análise, indicaríamos como técnicas Supervisionadas:
+  - Ridge
+  - SVR
+  - SVM
+
+E para técnicas Não Supervisionadas indicaríamos:
+  - KNN (para clusters de vinhos bons ou ruim)
+
+
+##==================================================================
